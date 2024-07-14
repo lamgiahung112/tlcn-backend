@@ -12,6 +12,12 @@ export class Motorbike {
     name: string;
 
     @Column()
+    slug: string;
+
+    @Column()
+    normalizedSlug: string;
+
+    @Column()
     description: string;
 
     @Column()
@@ -35,9 +41,6 @@ export class Motorbike {
     @Column((type) => DesignDescription)
     designDescriptions: DesignDescription[];
 
-    @Column((type) => DesignDescription)
-    newFeatures: DesignDescription[];
-
     @Column()
     engineDescription: Record<string, string>;
 
@@ -49,4 +52,7 @@ export class Motorbike {
 
     @Column()
     warrantyPolicy: Record<string, string>;
+
+    @Column()
+    galleryImages: string[];
 }
