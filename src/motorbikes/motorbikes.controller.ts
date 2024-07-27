@@ -5,7 +5,8 @@ import {
     Body,
     Patch,
     Param,
-    Delete
+    Delete,
+    UseGuards
 } from '@nestjs/common';
 import { MotorbikesService } from './motorbikes.service';
 import { CreateMotorbikeDto } from './dto/create-motorbike.dto';

@@ -2,10 +2,15 @@ import { Module } from '@nestjs/common';
 import { MotorbikesModule } from './motorbikes/motorbikes.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Motorbike } from '@/motorbikes/entities/motorbike.entity';
+import { AuthModule } from './auth/auth.module';
 import * as process from 'node:process';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
     imports: [
+        ConfigModule.forRoot({
+            isGlobal: true
+        }),
         TypeOrmModule.forRoot({
             type: 'mongodb',
             host: process.env.DB_HOST,
@@ -16,7 +21,8 @@ import * as process from 'node:process';
             useUnifiedTopology: true,
             useNewUrlParser: true
         }),
-        MotorbikesModule
+        MotorbikesModule,
+        AuthModule
     ]
 })
 export class AppModule {}
