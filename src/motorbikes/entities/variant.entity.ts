@@ -6,5 +6,5 @@ export class Variant {
     color: Color;
 
     @Column()
-    images: string;
+    images: string[];
 }
