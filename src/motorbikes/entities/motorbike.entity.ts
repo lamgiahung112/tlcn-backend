@@ -1,7 +1,16 @@
-import { Column, Entity, ObjectIdColumn } from 'typeorm';
+import {
+    Column,
+    Entity,
+    JoinTable, ManyToMany,
+    ManyToOne,
+    ObjectIdColumn,
+    OneToMany,
+    OneToOne
+} from 'typeorm';
 import { ObjectId } from 'mongodb';
 import { DesignDescription } from '@/motorbikes/entities/design_description.entity';
 import { Variant } from '@/motorbikes/entities/variant.entity';
+import { MediaResource } from '@/media-resource/entities/media-resource';
 
 @Entity('motorbikes')
 export class Motorbike {
@@ -23,22 +32,34 @@ export class Motorbike {
     @Column()
     introductionVideo: string;
 
-    @Column((type) => Variant)
-    variant: Variant[];
+    @Column()
+    recommendedPrice: number;
 
     @Column()
-    thumbnailImage: string;
+    category: string;
+
+    @Column(() => Variant)
+    variant: Variant[];
+
+    @ManyToOne(() => MediaResource, (mr) => mr.thumbnail, {
+        eager: true
+    })
+    thumbnailImage: MediaResource;
 
     @Column()
     designCatchPhrase: string;
 
-    @Column()
+    @ManyToOne(() => MediaResource, (mr) => mr.thumbnail, {
+        eager: true
+    })
     designBackgroundImage: string;
 
-    @Column()
+    @ManyToOne(() => MediaResource, (mr) => mr.designDisplays, {
+        eager: true
+    })
     designMotorbikeDisplayImage: string;
 
-    @Column((type) => DesignDescription)
+    @Column(() => DesignDescription)
     designDescriptions: DesignDescription[];
 
     @Column()
@@ -53,6 +74,9 @@ export class Motorbike {
     @Column()
     warrantyPolicy: Record<string, string>;
 
+    @ManyToMany(() => MediaResource)
+    galleryImages: MediaResource[];
+
     @Column()
-    galleryImages: string[];
+    createdAt: Date;
 }

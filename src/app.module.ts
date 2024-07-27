@@ -5,6 +5,8 @@ import { Motorbike } from '@/motorbikes/entities/motorbike.entity';
 import { AuthModule } from './auth/auth.module';
 import * as process from 'node:process';
 import { ConfigModule } from '@nestjs/config';
+import { MediaResourceModule } from '@/media-resource/media-resource.module';
+import { MediaResource } from '@/media-resource/entities/media-resource';
 
 @Module({
     imports: [
@@ -17,12 +19,13 @@ import { ConfigModule } from '@nestjs/config';
             port: +process.env.DB_PORT,
             database: process.env.DB_NAME,
             synchronize: true,
-            entities: [Motorbike],
+            entities: [Motorbike, MediaResource],
             useUnifiedTopology: true,
             useNewUrlParser: true
         }),
         MotorbikesModule,
-        AuthModule
+        AuthModule,
+        MediaResourceModule
     ]
 })
 export class AppModule {}

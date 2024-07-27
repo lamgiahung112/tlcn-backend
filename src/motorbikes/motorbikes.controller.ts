@@ -1,46 +1,13 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Patch,
-    Param,
-    Delete,
-    UseGuards
-} from '@nestjs/common';
+import { Controller, Get, Param} from '@nestjs/common';
 import { MotorbikesService } from './motorbikes.service';
-import { CreateMotorbikeDto } from './dto/create-motorbike.dto';
-import { UpdateMotorbikeDto } from './dto/update-motorbike.dto';
+import GetMotorbikeListDto from '@/motorbikes/dto/get-motorbike-list.dto';
 
 @Controller('motorbikes')
 export class MotorbikesController {
     constructor(private readonly motorbikesService: MotorbikesService) {}
 
-    @Post()
-    create(@Body() createMotorbikeDto: CreateMotorbikeDto) {
-        return this.motorbikesService.create(createMotorbikeDto);
-    }
-
     @Get()
-    All() {
-        return this.motorbikesService.findAll();
-    }
-
-    @Get('/:id')
-    findOne(@Param('id') id: string) {
-        return this.motorbikesService.findOne(id);
-    }
-
-    @Patch('/:id')
-    update(
-        @Param('id') id: string,
-        @Body() updateMotorbikeDto: UpdateMotorbikeDto
-    ) {
-        return this.motorbikesService.update(+id, updateMotorbikeDto);
-    }
-
-    @Delete('/:id')
-    remove(@Param('id') id: string) {
-        return this.motorbikesService.remove(id);
+    async getMotorbikes(@Param() params: GetMotorbikeListDto) {
+        return await this.motorbikesService.find(params);
     }
 }
