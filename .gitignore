@@ -6,6 +6,9 @@
 # docker data folder
 /data
 
+# media
+media/
+
 # Logs
 logs
 *.log
