@@ -1,9 +1,9 @@
-import { Column } from 'typeorm';
+import { Prop } from '@nestjs/mongoose';
 
 export class Color {
-    @Column()
+    @Prop()
     name: string;
 
-    @Column()
+    @Prop()
     hex: string;
 }

@@ -1,82 +1,73 @@
-import {
-    Column,
-    Entity,
-    JoinTable, ManyToMany,
-    ManyToOne,
-    ObjectIdColumn,
-    OneToMany,
-    OneToOne
-} from 'typeorm';
-import { ObjectId } from 'mongodb';
 import { DesignDescription } from '@/motorbikes/entities/design_description.entity';
 import { Variant } from '@/motorbikes/entities/variant.entity';
 import { MediaResource } from '@/media-resource/entities/media-resource';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
 
-@Entity('motorbikes')
+export type MotorbikeDocument = HydratedDocument<Motorbike>;
+
+@Schema({
+    timestamps: {
+        createdAt: true,
+        updatedAt: true
+    }
+})
 export class Motorbike {
-    @ObjectIdColumn()
-    id: ObjectId;
-
-    @Column()
+    @Prop()
     name: string;
 
-    @Column()
+    @Prop()
     slug: string;
 
-    @Column()
+    @Prop()
     normalizedSlug: string;
 
-    @Column()
+    @Prop()
     description: string;
 
-    @Column()
+    @Prop()
     introductionVideo: string;
 
-    @Column()
+    @Prop()
     recommendedPrice: number;
 
-    @Column()
+    @Prop()
     category: string;
 
-    @Column(() => Variant)
+    @Prop({ type: [Variant] })
     variant: Variant[];
 
-    @ManyToOne(() => MediaResource, (mr) => mr.thumbnail, {
-        eager: true
-    })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'MediaResource' })
     thumbnailImage: MediaResource;
 
-    @Column()
+    @Prop()
     designCatchPhrase: string;
 
-    @ManyToOne(() => MediaResource, (mr) => mr.thumbnail, {
-        eager: true
-    })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'MediaResource' })
     designBackgroundImage: string;
 
-    @ManyToOne(() => MediaResource, (mr) => mr.designDisplays, {
-        eager: true
-    })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'MediaResource' })
     designMotorbikeDisplayImage: string;
 
-    @Column(() => DesignDescription)
+    @Prop({ type: [DesignDescription] })
     designDescriptions: DesignDescription[];
 
-    @Column()
+    @Prop({ type: Map, of: String })
     engineDescription: Record<string, string>;
 
-    @Column()
+    @Prop({ type: Map, of: String })
     chassisDescription: Record<string, string>;
 
-    @Column()
+    @Prop({ type: Map, of: String })
     sizeDescription: Record<string, string>;
 
-    @Column()
+    @Prop({ type: Map, of: String })
     warrantyPolicy: Record<string, string>;
 
-    @ManyToMany(() => MediaResource)
+    @Prop({
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'MediaResource' }]
+    })
     galleryImages: MediaResource[];
-
-    @Column()
-    createdAt: Date;
 }
+
+export const MotorbikeSchema = SchemaFactory.createForClass(Motorbike);

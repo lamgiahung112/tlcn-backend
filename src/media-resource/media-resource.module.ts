@@ -1,12 +1,22 @@
 import { Module } from '@nestjs/common';
 import { MediaResourceService } from './media-resource.service';
 import { MediaResourceController } from './media-resource.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MediaResource } from '@/media-resource/entities/media-resource';
+import {
+    MediaResource,
+    MediaResourceSchema
+} from '@/media-resource/entities/media-resource';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
     controllers: [MediaResourceController],
-    imports: [TypeOrmModule.forFeature([MediaResource])],
+    imports: [
+        MongooseModule.forFeature([
+            {
+                name: MediaResource.name,
+                schema: MediaResourceSchema
+            }
+        ])
+    ],
     providers: [MediaResourceService]
 })
 export class MediaResourceModule {}

@@ -8,7 +8,8 @@ import {
     BadRequestException,
     Get,
     Param,
-    Res
+    Res,
+    Query
 } from '@nestjs/common';
 import { MediaResourceService } from './media-resource.service';
 import { UploadMediaResouceDto } from './dto/upload-media-resouce.dto';
@@ -51,7 +52,7 @@ export class MediaResourceController {
     }
 
     @Get()
-    async getMediaResourceList(@Param() params: GetMediaResourceListDto) {
+    async getMediaResourceList(@Query() params: GetMediaResourceListDto) {
         return await this.mediaResourceService.getMediaResourceList(params);
     }
 
@@ -60,6 +61,14 @@ export class MediaResourceController {
         @Param('filename') filename: string,
         @Res() res: Response
     ) {
-        this.mediaResourceService.getImageReadStream(filename).pipe(res);
+        this.mediaResourceService
+            .getImageReadStream(filename)
+            .on('error', () => {
+                res.status(HttpStatus.NOT_FOUND).json({
+                    message: 'No such file!',
+                    status: HttpStatus.INTERNAL_SERVER_ERROR
+                });
+            })
+            .pipe(res);
     }
 }

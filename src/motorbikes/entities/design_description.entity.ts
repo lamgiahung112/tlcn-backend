@@ -1,12 +1,12 @@
-import { Column } from 'typeorm';
+import { Prop } from '@nestjs/mongoose';
 
 export class DesignDescription {
-    @Column()
+    @Prop()
     title: string;
 
-    @Column()
+    @Prop()
     description: string;
 
-    @Column()
+    @Prop()
     image: string;
 }

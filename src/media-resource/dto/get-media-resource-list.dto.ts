@@ -1,13 +1,20 @@
 import { Sortable } from '@/shared/dto/sortable.dto';
-import { IsNumberString, IsObject, Min } from 'class-validator';
+import { IsNumber, IsObject, IsOptional, IsString, Min } from 'class-validator';
 
 export class GetMediaResourceListDto {
     @IsObject()
+    @IsOptional()
     sort?: Sortable<'created_at'>;
+
+    @IsString()
+    @IsOptional()
+    name?: string;
+
     @Min(0)
-    @IsNumberString()
+    @IsNumber()
     page: number;
-    @IsNumberString()
+
+    @IsNumber()
     @Min(10)
     size: number;
 }

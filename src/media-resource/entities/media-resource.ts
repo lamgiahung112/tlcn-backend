@@ -1,36 +1,21 @@
-import { Column, Entity, ObjectIdColumn, OneToMany, Unique } from 'typeorm';
-import { ObjectId } from 'mongodb';
-import { Motorbike } from '@/motorbikes/entities/motorbike.entity';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
 
-@Entity('media-resource')
-@Unique(['path'])
+export type MediaResourceDocument = HydratedDocument<MediaResource>;
+
+@Schema()
 export class MediaResource {
-    @ObjectIdColumn()
-    id: ObjectId;
-
-    @Column()
+    @Prop()
     name: string;
 
-    @Column()
+    @Prop()
     type: 'IMAGE' | 'VIDEO';
 
-    @Column()
-    path: string;
-
-    @Column()
-    created_at: Date;
-
-    @OneToMany(() => Motorbike, (motorbike) => motorbike.thumbnailImage, {
-        eager: false
+    @Prop({
+        required: true,
+        unique: true
     })
-    thumbnail: Motorbike[];
-
-    @OneToMany(
-        () => Motorbike,
-        (motorbike) => motorbike.designMotorbikeDisplayImage,
-        {
-            eager: false
-        }
-    )
-    designDisplays: Motorbike[];
+    path: string;
 }
+
+export const MediaResourceSchema = SchemaFactory.createForClass(MediaResource);
