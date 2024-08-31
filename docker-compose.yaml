@@ -1,11 +1,16 @@
 services:
-  mongo:
-    container_name: mongodb
-    image: 'mongo:4.2.24-bionic'
-    restart: always
+  postgres:
+    container_name: postgres
+    image: 'postgres:14.2'
     ports:
-      - "27017:27017"
+      - "5432:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
     environment:
-      MONGO_INITDB_DATABASE: yamaha
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: family
     volumes:
-      - ./data:/data/db
+      - ./db-data/postgres/:/var/lib/postgresql/data/

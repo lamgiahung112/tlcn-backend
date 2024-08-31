@@ -8,6 +8,7 @@
 
 # media
 media/
+db-data
 
 # Logs
 logs

@@ -1,11 +1,11 @@
-import { IsNumberString, Min } from 'class-validator';
+import { IsNumber, Min } from 'class-validator';
 
 abstract class PaginationDto {
     @Min(0)
-    @IsNumberString()
+    @IsNumber()
     page: number;
-    @Min(10)
-    @IsNumberString()
+    @Min(1)
+    @IsNumber()
     size: number;
 }
 
