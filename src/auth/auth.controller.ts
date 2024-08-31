@@ -4,7 +4,6 @@ import {
     Get,
     Headers,
     Post,
-    Req,
     UnauthorizedException
 } from '@nestjs/common';
 import { AuthService } from '@/auth/auth.service';
@@ -21,7 +20,7 @@ export class AuthController {
             loginDto.password
         );
         return {
-            sessionId
+            data: { sessionId }
         };
     }
 
@@ -32,7 +31,7 @@ export class AuthController {
         }
         await this.authService.validate(sessionId);
         return {
-            isAuthenticated: true
+            data: { isAuthenticated: true }
         };
     }
 }

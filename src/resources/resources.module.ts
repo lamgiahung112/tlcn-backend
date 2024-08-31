@@ -3,6 +3,8 @@ import { S3Module } from 'nestjs-s3';
 import ResourcesService from './resources.service';
 import { PrismaService } from '@/shared/PrismaClient';
 import ResourcesController from './resources.controller';
+import { AuthModule } from '@/auth/auth.module';
+import { AuthService } from '@/auth/auth.service';
 
 @Module({
     imports: [
@@ -19,9 +21,10 @@ import ResourcesController from './resources.controller';
                     }
                 };
             }
-        })
+        }),
+        AuthModule
     ],
-    providers: [ResourcesService, PrismaService],
+    providers: [ResourcesService, PrismaService, AuthService],
     controllers: [ResourcesController],
     exports: [ResourcesService]
 })
