@@ -15,6 +15,13 @@ export default class ResourcesService {
         private readonly prisma: PrismaService
     ) {}
 
+    async updateResource(id: string, fileName: string) {
+        return this.prisma.resource.update({
+            data: { name: fileName },
+            where: { id }
+        });
+    }
+
     async getResources(params: FilterResourceRequest) {
         return this.prisma.resource.findMany({
             select: { id: true, created_at: true, name: true, url: true },

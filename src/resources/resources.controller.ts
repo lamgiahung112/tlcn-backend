@@ -16,6 +16,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import UploadFileRequest from './dto/UploadFileRequest';
 import FilterResourceRequest from './dto/FilterResourceRequest';
 import { AuthGuard } from '@/auth/auth.guard';
+import UpdateResourceRequest from './dto/UpdateResourceRequest';
 
 @Controller('/resources')
 export default class ResourcesController {
@@ -42,6 +43,21 @@ export default class ResourcesController {
         return {
             statusCode: 200,
             data: await this.resourceService.getResources(params)
+        };
+    }
+
+    @Post('/:id')
+    @UseGuards(AuthGuard)
+    async updateResource(
+        @Param('id') resourceId: string,
+        @Body() payload: UpdateResourceRequest
+    ) {
+        return {
+            statusCode: 200,
+            data: await this.resourceService.updateResource(
+                resourceId,
+                payload.fileName
+            )
         };
     }
 }
