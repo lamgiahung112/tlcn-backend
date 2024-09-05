@@ -13,11 +13,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Admin {
-  id String @default(uuid()) @id
-  name String
-  email String
-  password String
+enum Category {
+  STROKE
+  SCOOTER
+  HEAVYBIKE
 }
 
 model Resource {
@@ -25,4 +24,61 @@ model Resource {
   url String @unique
   name String
   created_at DateTime @default(now())
+
+  descriptions DetailDescription[]
+  motorbikePictures MotorBikePictures[]
+}
+
+model Model {
+  id String @default(uuid()) @id
+  name String
+
+  motorbikes Motorbike[]
+}
+
+model DetailDescription {
+  id String @default(uuid()) @id
+  title String
+  detail String
+  resource_id String?
+
+  resource Resource? @relation(fields: [resource_id], references: [id])
+  motorbikeDetails MotorbikeDetails[]
+}
+
+model MotorbikeDetails {
+  detail_description_id String
+  motorbike_id String
+  
+  motorbike Motorbike @relation(fields: [motorbike_id], references: [id])
+  description DetailDescription @relation(fields: [detail_description_id], references: [id])
+
+  @@id([motorbike_id, detail_description_id])
+}
+
+model MotorBikePictures {
+  resource_id String
+  motorbike_id String
+
+  resource Resource @relation(fields: [resource_id], references: [id])
+  motorbike Motorbike @relation(fields: [motorbike_id], references: [id])
+
+  @@id([resource_id, motorbike_id])
+}
+
+model Motorbike {
+  id String @default(uuid()) @id
+  name String
+  category Category
+  model_id String
+  recommended_price String
+  description String
+  colors Json[]
+  details MotorbikeDetails[]
+  engineSpecs Json
+  chassisSpecs Json
+  sizeSpecs Json
+  warrantySpecs Json
+  gallery MotorBikePictures[]
+  model Model @relation(fields: [model_id], references: [id])
 }

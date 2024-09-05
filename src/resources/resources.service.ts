@@ -53,6 +53,11 @@ export default class ResourcesService {
         }
     }
 
+    async singleUpload(file: Express.Multer.File, fileName: string) {
+        const key = `${randomUUID()}-${file.originalname.replaceAll(' ', '')}`;
+        return this.upload(file, key, fileName);
+    }
+
     private async upload(
         file: Express.Multer.File,
         key: string,

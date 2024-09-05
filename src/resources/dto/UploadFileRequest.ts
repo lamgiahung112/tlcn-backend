@@ -1,6 +1,6 @@
-import { IsArray } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export default class UploadFileRequest {
-    @IsArray()
-    names: string[];
+    @IsString()
+    name: string;
 }

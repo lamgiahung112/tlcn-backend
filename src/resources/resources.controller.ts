@@ -1,18 +1,17 @@
 import {
     Body,
     Controller,
-    Delete,
     Get,
     Inject,
     Param,
     Post,
     Query,
-    UploadedFiles,
+    UploadedFile,
     UseGuards,
     UseInterceptors
 } from '@nestjs/common';
 import ResourcesService from './resources.service';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import UploadFileRequest from './dto/UploadFileRequest';
 import FilterResourceRequest from './dto/FilterResourceRequest';
 import { AuthGuard } from '@/auth/auth.guard';
@@ -24,12 +23,12 @@ export default class ResourcesController {
 
     @Post()
     @UseGuards(AuthGuard)
-    @UseInterceptors(FilesInterceptor('files'))
-    async uploadFiles(
-        @UploadedFiles() files: Express.Multer.File[],
+    @UseInterceptors(FileInterceptor('file'))
+    async uploadFile(
+        @UploadedFile() files: Express.Multer.File,
         @Body() payload: UploadFileRequest
     ) {
-        this.resourceService.multiUpload(files, payload.names);
+        this.resourceService.singleUpload(files, payload.name);
 
         return {
             statusCode: 200,
