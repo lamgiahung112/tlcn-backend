@@ -14,12 +14,6 @@ export default class MotorbikeModelRepository {
         });
     }
 
-    list() {
-        return this.prisma.model.findMany({
-            select: { id: true, name: true, motorbikes: false }
-        });
-    }
-
     update(id: string, data: Prisma.ModelUpdateInput) {
         return this.prisma.model.update({
             data,

@@ -25,7 +25,7 @@ model Resource {
   name String
   created_at DateTime @default(now())
 
-  descriptions DetailDescription[]
+  descriptions MotorbikeDetails[]
   motorbikePictures MotorBikePictures[]
 }
 
@@ -36,24 +36,15 @@ model Model {
   motorbikes Motorbike[]
 }
 
-model DetailDescription {
+model MotorbikeDetails {
   id String @default(uuid()) @id
   title String
   detail String
   resource_id String?
+  motorbike_id String
 
   resource Resource? @relation(fields: [resource_id], references: [id])
-  motorbikeDetails MotorbikeDetails[]
-}
-
-model MotorbikeDetails {
-  detail_description_id String
-  motorbike_id String
-  
   motorbike Motorbike @relation(fields: [motorbike_id], references: [id])
-  description DetailDescription @relation(fields: [detail_description_id], references: [id])
-
-  @@id([motorbike_id, detail_description_id])
 }
 
 model MotorBikePictures {
