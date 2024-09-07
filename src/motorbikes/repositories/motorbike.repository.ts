@@ -10,7 +10,8 @@ export default class MotorbikeRepository {
         id: true,
         name: true,
         description: true,
-        colors: true,
+        color: true,
+        colorInHex: true,
         category: true,
         recommended_price: true
     };
@@ -19,7 +20,9 @@ export default class MotorbikeRepository {
         ...this.minimalSelectArgs,
         details: {
             select: {
-                description: true
+                title: true,
+                resource: true,
+                detail: true
             }
         },
         chassisSpecs: true,
