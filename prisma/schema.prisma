@@ -18,15 +18,6 @@ enum ResourceType {
   VIDEO
 }
 
-model Staff {
-  id String @default(uuid()) @id
-  name String
-  email String
-  password String
-
-  posts Post[]
-}
-
 model Resource {
   id String @default(uuid()) @id
   url String @unique
@@ -90,12 +81,10 @@ model Post {
   id String @default(uuid()) @id
   title String
   thumbnail_resource_id String 
-  author_id String
   content String
   created_at DateTime
   modified_at DateTime
   views Int @default(0)
 
   thumbnail Resource @relation(fields: [thumbnail_resource_id], references: [id])
-  author Staff @relation(fields: [author_id], references: [id])
 }
