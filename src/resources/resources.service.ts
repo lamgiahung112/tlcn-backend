@@ -1,5 +1,5 @@
 import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { Multer } from 'multer';
 import { randomUUID } from 'crypto';
 import { InjectS3, S3 } from 'nestjs-s3';
@@ -24,7 +24,12 @@ export default class ResourcesService {
 
     async getResources(params: FilterResourceRequest) {
         return this.prisma.resource.findMany({
-            select: { id: true, created_at: true, name: true, url: true },
+            select: {
+                id: true,
+                created_at: true,
+                name: true,
+                url: true
+            },
             where: {
                 name: {
                     contains: params.name
@@ -34,6 +39,29 @@ export default class ResourcesService {
             skip: params.page * params.size,
             take: params.size
         });
+    }
+
+    async deleteResource(id: string) {
+        const resource = await this.prisma.resource.findUnique({
+            where: { id }
+        });
+        if (!resource) {
+            return {
+                message: 'Resource not found',
+                statusCode: HttpStatus.NOT_FOUND
+            };
+        }
+        const deleteCommand = new DeleteObjectCommand({
+            Bucket: this.configService.get<string>('S3_BUCKET'),
+            Key: resource.url.split('/').pop()
+        });
+        this.s3.send(deleteCommand);
+        await this.prisma.resource.delete({
+            where: { id }
+        });
+        return {
+            message: 'Your request is being processed! Please wait a moment.'
+        };
     }
 
     async multiUpload(files: Express.Multer.File[], names: string[]) {

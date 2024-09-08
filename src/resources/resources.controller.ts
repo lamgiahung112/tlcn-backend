@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     Inject,
     Param,
@@ -58,5 +59,11 @@ export default class ResourcesController {
                 payload.fileName
             )
         };
+    }
+
+    @Delete('/:id')
+    @UseGuards(AuthGuard)
+    async deleteResource(@Param('id') resourceId: string) {
+        return await this.resourceService.deleteResource(resourceId);
     }
 }
