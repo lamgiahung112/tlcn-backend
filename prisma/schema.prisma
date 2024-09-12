@@ -13,20 +13,15 @@ enum Category {
   HEAVYBIKE
 }
 
-enum ResourceType {
-  IMAGE
-  VIDEO
-}
-
 model Resource {
   id String @default(uuid()) @id
   url String @unique
   name String
   created_at DateTime @default(now())
-  type ResourceType @default(IMAGE)
 
   descriptions MotorbikeDetails[]
   motorbikePictures MotorBikePictures[]
+  variantDisplayPictures VariantDisplayPicture[]
   postThumbnails Post[]
 }
 
@@ -66,8 +61,6 @@ model Motorbike {
   model_id String
   recommended_price String
   description String
-  color String
-  colorInHex String
   details MotorbikeDetails[]
   engineSpecs Json
   chassisSpecs Json
@@ -75,6 +68,27 @@ model Motorbike {
   warrantySpecs Json
   gallery MotorBikePictures[]
   model Model @relation(fields: [model_id], references: [id])
+  variants MotorbikeVariant[]
+}
+
+model MotorbikeVariant {
+  id String @default(uuid()) @id
+  motorbike_id String
+  color String
+  colorInHex String
+  displayPictures VariantDisplayPicture[]
+
+  motorbike Motorbike @relation(fields: [motorbike_id], references: [id])
+}
+
+model VariantDisplayPicture {
+  resource_id String
+  variant_id String
+
+  resource Resource @relation(fields: [resource_id], references: [id])
+  variant MotorbikeVariant @relation(fields: [variant_id], references: [id])
+
+  @@id([resource_id, variant_id])
 }
 
 model Post {

@@ -1,28 +1,31 @@
-import PaginationDto from '@/shared/dto/pagination.dto';
-import { Sortable } from '@/shared/dto/sortable.dto';
 import { PrismaService } from '@/shared/PrismaClient';
-import { Prisma } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
+import { Prisma, PrismaPromise } from '@prisma/client';
+import UpdateMotorbikeRequest from '../dto/UpdateMotorbikeRequest';
+import GalleryRepository from './gallery.repository';
+import VariantRepository from './variant.repository';
+import MotorbikeDetailRepository from './motorbike_detail.repository';
 
+@Injectable()
 export default class MotorbikeRepository {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly galleryRepository: GalleryRepository,
+        private readonly variantRepository: VariantRepository,
+        private readonly detailRepository: MotorbikeDetailRepository
+    ) {}
 
-    private minimalSelectArgs: Prisma.MotorbikeSelect = {
+    private motorbikeSelect: Prisma.MotorbikeSelect = {
         id: true,
         name: true,
-        description: true,
-        color: true,
-        colorInHex: true,
         category: true,
-        recommended_price: true
-    };
-
-    private fullSelectArgs: Prisma.MotorbikeSelect = {
-        ...this.minimalSelectArgs,
-        details: {
+        model_id: true,
+        recommended_price: true,
+        description: true,
+        model: {
             select: {
-                title: true,
-                resource: true,
-                detail: true
+                id: true,
+                name: true
             }
         },
         chassisSpecs: true,
@@ -31,42 +34,124 @@ export default class MotorbikeRepository {
         warrantySpecs: true,
         gallery: {
             select: {
-                resource: true
+                resource: {
+                    select: {
+                        id: true,
+                        url: true,
+                        name: true
+                    }
+                }
             }
         },
-        model: {
+        variants: {
             select: {
-                name: true
+                id: true,
+                color: true,
+                colorInHex: true
             }
         }
     };
 
-    insert(args: Prisma.MotorbikeCreateInput) {
-        return this.prisma.motorbike.create({
-            data: args
-        });
+    private motorbikeFullSelect: Prisma.MotorbikeSelect = {
+        id: true,
+        name: true,
+        category: true,
+        model_id: true,
+        recommended_price: true,
+        description: true,
+        model: {
+            select: {
+                id: true,
+                name: true
+            }
+        },
+        chassisSpecs: true,
+        engineSpecs: true,
+        sizeSpecs: true,
+        warrantySpecs: true,
+        gallery: {
+            select: {
+                resource: {
+                    select: {
+                        id: true,
+                        url: true,
+                        name: true
+                    }
+                }
+            }
+        },
+        variants: {
+            select: {
+                id: true,
+                color: true,
+                colorInHex: true,
+                displayPictures: {
+                    select: {
+                        resource: {
+                            select: {
+                                id: true,
+                                url: true,
+                                name: true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        details: true
+    };
+
+    async update(id: string, data: UpdateMotorbikeRequest) {
+        const jobs = [] as Promise<any>[];
+
+        jobs.push(this.galleryRepository.update(id, data.gallery));
+        jobs.push(this.variantRepository.update(id, data.variants));
+        jobs.push(this.detailRepository.update(id, data.detail));
+        jobs.push(
+            this.prisma.motorbike.update({
+                where: {
+                    id
+                },
+                data: {
+                    name: data.name,
+                    category: data.category,
+                    model_id: data.modelId,
+                    recommended_price: data.recommendedPrice,
+                    description: data.description,
+                    engineSpecs: data.engineSpecs,
+                    chassisSpecs: data.chassisSpecs,
+                    sizeSpecs: data.sizeSpecs,
+                    warrantySpecs: data.warrantySpecs
+                }
+            })
+        );
+
+        return Promise.all(jobs);
     }
 
-    list(
-        conditions: Prisma.MotorbikeWhereInput,
-        paginator: PaginationDto,
-        sort: Sortable<'recommended_price'>
-    ) {
-        return this.prisma.motorbike.findMany({
-            skip: paginator.page * paginator.size,
-            take: paginator.size,
-            select: this.minimalSelectArgs,
-            orderBy: sort,
-            where: conditions
+    async create(data: UpdateMotorbikeRequest) {
+        const motorbike = await this.prisma.motorbike.create({
+            data: {
+                name: data.name,
+                category: data.category,
+                model_id: data.modelId,
+                recommended_price: data.recommendedPrice,
+                description: data.description,
+                chassisSpecs: data.chassisSpecs,
+                engineSpecs: data.engineSpecs,
+                sizeSpecs: data.sizeSpecs,
+                warrantySpecs: data.warrantySpecs
+            }
         });
-    }
 
-    fullDetail(id: string) {
-        return this.prisma.motorbike.findUnique({
-            where: {
-                id
-            },
-            select: this.fullSelectArgs
-        });
+        const jobs = [] as Promise<any>[];
+
+        jobs.push(this.galleryRepository.update(motorbike.id, data.gallery));
+        jobs.push(this.variantRepository.update(motorbike.id, data.variants));
+        jobs.push(this.detailRepository.update(motorbike.id, data.detail));
+
+        await Promise.all(jobs);
+
+        return motorbike;
     }
 }
