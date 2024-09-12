@@ -40,4 +40,8 @@ export default class ModelRepository {
             }
         });
     }
+
+    delete(id: string) {
+        return this.prisma.model.delete({ where: { id } });
+    }
 }

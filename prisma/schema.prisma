@@ -59,7 +59,7 @@ model Motorbike {
   name String
   category Category
   model_id String
-  recommended_price String
+  recommended_price Int
   description String
   details MotorbikeDetails[]
   engineSpecs Json
@@ -74,11 +74,19 @@ model Motorbike {
 model MotorbikeVariant {
   id String @default(uuid()) @id
   motorbike_id String
-  color String
-  colorInHex String
+  color_id String
+  
   displayPictures VariantDisplayPicture[]
 
   motorbike Motorbike @relation(fields: [motorbike_id], references: [id])
+  color Color @relation(fields: [color_id], references: [id])
+}
+
+model Color {
+  id String @default(uuid()) @id
+  name String
+  hex String
+  variants MotorbikeVariant[]
 }
 
 model VariantDisplayPicture {

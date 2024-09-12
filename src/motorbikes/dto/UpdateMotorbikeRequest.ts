@@ -2,6 +2,7 @@ import { Category } from '@prisma/client';
 import {
     IsArray,
     IsNotEmpty,
+    IsNumber,
     IsObject,
     IsOptional,
     IsString
@@ -20,9 +21,9 @@ export default class UpdateMotorbikeRequest {
     @IsNotEmpty()
     modelId: string;
 
-    @IsString()
+    @IsNumber()
     @IsNotEmpty()
-    recommendedPrice: string;
+    recommendedPrice: number;
 
     @IsString()
     @IsNotEmpty()
@@ -81,11 +82,7 @@ export class UpdateMotorbikeVariantRequest {
 
     @IsString()
     @IsNotEmpty()
-    color: string;
-
-    @IsString()
-    @IsNotEmpty()
-    colorInHex: string;
+    color_id: string;
 
     @IsArray()
     @IsNotEmpty()

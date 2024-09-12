@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    Put
+} from '@nestjs/common';
 import ModelService from '../services/model.service';
 import UpdateModelRequest from '../dto/UpdateModelRequest';
 
@@ -19,5 +27,10 @@ export default class ModelController {
     @Get()
     async getAll() {
         return this.modelService.getAll();
+    }
+
+    @Delete(':id')
+    async delete(@Param('id') id: string) {
+        return this.modelService.delete(id);
     }
 }

@@ -5,6 +5,7 @@ import UpdateMotorbikeRequest from '../dto/UpdateMotorbikeRequest';
 import GalleryRepository from './gallery.repository';
 import VariantRepository from './variant.repository';
 import MotorbikeDetailRepository from './motorbike_detail.repository';
+import FilterMotorbikeRequest from '../dto/FilterMotorbikeRequest';
 
 @Injectable()
 export default class MotorbikeRepository {
@@ -46,8 +47,7 @@ export default class MotorbikeRepository {
         variants: {
             select: {
                 id: true,
-                color: true,
-                colorInHex: true
+                color: true
             }
         }
     };
@@ -84,7 +84,6 @@ export default class MotorbikeRepository {
             select: {
                 id: true,
                 color: true,
-                colorInHex: true,
                 displayPictures: {
                     select: {
                         resource: {
@@ -153,5 +152,38 @@ export default class MotorbikeRepository {
         await Promise.all(jobs);
 
         return motorbike;
+    }
+
+    getList(filter: FilterMotorbikeRequest) {
+        const { minPrice, maxPrice, category, sort, search } = filter;
+
+        const where: Prisma.MotorbikeWhereInput = {
+            name: {
+                contains: search,
+                mode: 'insensitive'
+            },
+            recommended_price: {
+                gte: minPrice,
+                lte: maxPrice
+            },
+            category: category
+        };
+
+        return this.prisma.motorbike.findMany({
+            where,
+            orderBy: sort,
+            select: this.motorbikeSelect,
+            skip: (filter.page - 1) * filter.size,
+            take: filter.size
+        });
+    }
+
+    getById(id: string) {
+        return this.prisma.motorbike.findUnique({
+            where: {
+                id
+            },
+            select: this.motorbikeFullSelect
+        });
     }
 }
