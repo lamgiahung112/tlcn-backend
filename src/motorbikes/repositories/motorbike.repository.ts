@@ -33,23 +33,8 @@ export default class MotorbikeRepository {
         engineSpecs: true,
         sizeSpecs: true,
         warrantySpecs: true,
-        gallery: {
-            select: {
-                resource: {
-                    select: {
-                        id: true,
-                        url: true,
-                        name: true
-                    }
-                }
-            }
-        },
-        variants: {
-            select: {
-                id: true,
-                color: true
-            }
-        }
+        gallery: true,
+        variants: true
     };
 
     private motorbikeFullSelect: Prisma.MotorbikeSelect = {
@@ -155,23 +140,23 @@ export default class MotorbikeRepository {
     }
 
     getList(filter: FilterMotorbikeRequest) {
-        const { minPrice, maxPrice, category, sort, search } = filter;
+        // const { minPrice, maxPrice, category, sort, search } = filter;
 
-        const where: Prisma.MotorbikeWhereInput = {
-            name: {
-                contains: search,
-                mode: 'insensitive'
-            },
-            recommended_price: {
-                gte: minPrice,
-                lte: maxPrice
-            },
-            category: category
-        };
+        // const where: Prisma.MotorbikeWhereInput = {
+        //     name: {
+        //         contains: search,
+        //         mode: 'insensitive'
+        //     },
+        //     recommended_price: {
+        //         gte: minPrice,
+        //         lte: maxPrice
+        //     },
+        //     category: category
+        // };
 
         return this.prisma.motorbike.findMany({
-            where,
-            orderBy: sort,
+            // where,
+            // orderBy: sort,
             select: this.motorbikeSelect,
             skip: (filter.page - 1) * filter.size,
             take: filter.size

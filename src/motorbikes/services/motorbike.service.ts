@@ -1,7 +1,9 @@
+import { HttpStatus, Injectable } from '@nestjs/common';
 import FilterMotorbikeRequest from '../dto/FilterMotorbikeRequest';
 import UpdateMotorbikeRequest from '../dto/UpdateMotorbikeRequest';
 import MotorbikeRepository from '../repositories/motorbike.repository';
 
+@Injectable()
 export default class MotorbikeService {
     constructor(private readonly motorbikeRepository: MotorbikeRepository) {}
 
@@ -15,9 +17,10 @@ export default class MotorbikeService {
         } catch (error) {
             return {
                 data: null,
+                status: HttpStatus.INTERNAL_SERVER_ERROR,
                 message: 'Create motorbike failed'
             };
-        } 
+        }
     }
 
     async update(id: string, data: UpdateMotorbikeRequest) {

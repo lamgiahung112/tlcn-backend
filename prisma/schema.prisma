@@ -40,17 +40,16 @@ model MotorbikeDetails {
   resource_id String?
   motorbike_id String
 
-  resource Resource? @relation(fields: [resource_id], references: [id])
-  motorbike Motorbike @relation(fields: [motorbike_id], references: [id])
+  resource Resource? @relation(fields: [resource_id], references: [id], onDelete: Cascade)
+  motorbike Motorbike @relation(fields: [motorbike_id], references: [id], onDelete: Cascade)
 }
 
 model MotorBikePictures {
   resource_id String
   motorbike_id String
 
-  resource Resource @relation(fields: [resource_id], references: [id])
-  motorbike Motorbike @relation(fields: [motorbike_id], references: [id])
-
+  resource Resource @relation(fields: [resource_id], references: [id], onDelete: Cascade)
+  motorbike Motorbike @relation(fields: [motorbike_id], references: [id], onDelete: Cascade)
   @@id([resource_id, motorbike_id])
 }
 
@@ -67,7 +66,7 @@ model Motorbike {
   sizeSpecs Json
   warrantySpecs Json
   gallery MotorBikePictures[]
-  model Model @relation(fields: [model_id], references: [id])
+  model Model @relation(fields: [model_id], references: [id], onDelete: Cascade)
   variants MotorbikeVariant[]
 }
 
@@ -78,8 +77,8 @@ model MotorbikeVariant {
   
   displayPictures VariantDisplayPicture[]
 
-  motorbike Motorbike @relation(fields: [motorbike_id], references: [id])
-  color Color @relation(fields: [color_id], references: [id])
+  motorbike Motorbike @relation(fields: [motorbike_id], references: [id], onDelete: Cascade)
+  color Color @relation(fields: [color_id], references: [id], onDelete: Cascade)
 }
 
 model Color {

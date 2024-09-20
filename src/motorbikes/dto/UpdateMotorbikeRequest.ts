@@ -59,10 +59,6 @@ export default class UpdateMotorbikeRequest {
 
 export class UpdateMotorbikeDetailRequest {
     @IsString()
-    @IsOptional()
-    id: string;
-
-    @IsString()
     @IsNotEmpty()
     title: string;
 
@@ -76,10 +72,6 @@ export class UpdateMotorbikeDetailRequest {
 }
 
 export class UpdateMotorbikeVariantRequest {
-    @IsString()
-    @IsOptional()
-    id: string;
-
     @IsString()
     @IsNotEmpty()
     color_id: string;

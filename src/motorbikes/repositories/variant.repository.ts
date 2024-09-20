@@ -12,72 +12,29 @@ export default class VariantRepository {
     ) {}
 
     async update(motorbike_id: string, data: UpdateMotorbikeVariantRequest[]) {
-        const oldVariants = await this.prisma.motorbikeVariant.findMany({
+        await this.prisma.motorbikeVariant.deleteMany({
             where: {
-                motorbike_id: motorbike_id
+                motorbike_id
             }
         });
 
-        const jobs: PrismaPromise<any>[] = [];
-
-        const variantsToDelete = oldVariants.filter(
-            (variant) => !data.some((v) => v.id === variant.id)
-        );
-        const variantsToAdd = data.filter(
-            (variant) => !oldVariants.some((v) => v.id === variant.id)
-        );
-        const variantsToUpdate = data.filter((variant) =>
-            oldVariants.some((v) => v.id === variant.id)
-        );
-
-        jobs.push(
-            this.prisma.motorbikeVariant.deleteMany({
-                where: {
-                    id: {
-                        in: variantsToDelete.map((variant) => variant.id)
+        return data.map(async (variant, idx) => {
+            return this.prisma.motorbikeVariant
+                .create({
+                    data: {
+                        color_id: variant.color_id,
+                        motorbike_id
+                    },
+                    select: {
+                        id: true
                     }
-                }
-            })
-        );
-
-        jobs.push(
-            this.prisma.motorbikeVariant.createMany({
-                data: variantsToAdd.map((variant) => ({
-                    motorbike_id,
-                    ...variant
-                }))
-            })
-        );
-
-        jobs.push(
-            this.prisma.motorbikeVariant.updateMany({
-                where: {
-                    id: {
-                        in: variantsToUpdate.map((variant) => variant.id)
-                    }
-                },
-                data: variantsToUpdate
-            })
-        );
-        // Update variants
-        await this.prisma.$transaction(jobs);
-
-        const variantsAfterUpdate = await this.prisma.motorbikeVariant.findMany(
-            {
-                where: {
-                    motorbike_id: motorbike_id
-                }
-            }
-        );
-
-        // Update variant pictures
-        await Promise.all(
-            variantsAfterUpdate.map((variant) =>
-                this.variantPictureRepository.update(
-                    variant.id,
-                    data.find((v) => v.id === variant.id)?.displayPictures || []
-                )
-            )
-        );
+                })
+                .then((variant) => {
+                    return this.variantPictureRepository.update(
+                        variant.id,
+                        data[idx].displayPictures
+                    );
+                });
+        });
     }
 }

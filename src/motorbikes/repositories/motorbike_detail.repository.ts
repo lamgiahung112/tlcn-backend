@@ -6,12 +6,20 @@ import { UpdateMotorbikeDetailRequest } from '../dto/UpdateMotorbikeRequest';
 export default class MotorbikeDetailRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    update(motorbike_id: string, data: UpdateMotorbikeDetailRequest[]) {
-        return this.prisma.motorbikeDetails.updateMany({
+    async update(motorbike_id: string, data: UpdateMotorbikeDetailRequest[]) {
+        await this.prisma.motorbikeDetails.deleteMany({
             where: {
                 motorbike_id
-            },
-            data
+            }
+        });
+
+        await this.prisma.motorbikeDetails.createMany({
+            data: data.map((detail) => ({
+                motorbike_id,
+                title: detail.title,
+                detail: detail.detail,
+                resource_id: detail.resource_id
+            }))
         });
     }
 }

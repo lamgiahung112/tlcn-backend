@@ -1,6 +1,7 @@
-import { Body, Controller, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import UpdateMotorbikeRequest from '../dto/UpdateMotorbikeRequest';
 import MotorbikeService from '../services/motorbike.service';
+import FilterMotorbikeRequest from '../dto/FilterMotorbikeRequest';
 
 @Controller('motorbikes')
 export default class MotorbikeController {
@@ -17,5 +18,15 @@ export default class MotorbikeController {
         @Body() data: UpdateMotorbikeRequest
     ) {
         return this.motorbikeService.update(id, data);
+    }
+
+    @Get(':id')
+    async getById(@Param('id') id: string) {
+        return this.motorbikeService.getById(id);
+    }
+
+    @Get()
+    async getList(@Query() filter: FilterMotorbikeRequest) {
+        return this.motorbikeService.getList(filter);
     }
 }
