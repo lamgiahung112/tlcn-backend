@@ -7,105 +7,126 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 enum Category {
-  STROKE
   SCOOTER
-  HEAVYBIKE
+  HEAVY
+  STROKE
 }
 
-model Resource {
-  id String @default(uuid()) @id
-  url String @unique
-  name String
-  created_at DateTime @default(now())
-
-  descriptions MotorbikeDetails[]
-  motorbikePictures MotorBikePictures[]
-  variantDisplayPictures VariantDisplayPicture[]
-  postThumbnails Post[]
+enum OrderStatus {
+  CREATED
+  CANCELLED
+  CONFIRMED
+  DELIVERY_STARTED
+  COMPLETED
 }
 
-model Model {
-  id String @default(uuid()) @id
-  name String
-  description String
-
-  motorbikes Motorbike[]
+model ImageResource {
+  id                    Int                     @id @default(autoincrement())
+  filename              String
+  s3Key                 String
+  createdAt             DateTime                @default(now())
+  GenericMotorbikeImage GenericMotorbikeImage[]
+  GenericMotorbikeDetail GenericMotorbikeDetail[]
 }
 
-model MotorbikeDetails {
-  id String @default(uuid()) @id
-  title String
-  detail String
-  resource_id String?
-  motorbike_id String
-
-  resource Resource? @relation(fields: [resource_id], references: [id], onDelete: Cascade)
-  motorbike Motorbike @relation(fields: [motorbike_id], references: [id], onDelete: Cascade)
+model GenericMotorbike {
+  id                    Int                     @id @default(autoincrement())
+  category              Category
+  model                 String
+  name                  String
+  recommendedPrice      Int
+  description           String?
+  colorInHex            String?                 @db.Char(7)
+  colorName             String?
+  engineSpecs           Json?
+  chassisSpecs          Json?
+  warrantySpecs         Json?
+  isAvailable           Boolean                 @default(true)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  images                GenericMotorbikeImage[]
+  details               GenericMotorbikeDetail[]
+  motorbikes            Motorbike[]
 }
 
-model MotorBikePictures {
-  resource_id String
-  motorbike_id String
+model GenericMotorbikeImage {
+  id                 Int              @id @default(autoincrement())
+  genericMotorbikeId Int
+  imageResourceId    Int
+  isGallery          Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  genericMotorbike   GenericMotorbike @relation(fields: [genericMotorbikeId], references: [id])
+  imageResource      ImageResource    @relation(fields: [imageResourceId], references: [id])
+}
 
-  resource Resource @relation(fields: [resource_id], references: [id], onDelete: Cascade)
-  motorbike Motorbike @relation(fields: [motorbike_id], references: [id], onDelete: Cascade)
-  @@id([resource_id, motorbike_id])
+model GenericMotorbikeDetail {
+  id                 Int              @id @default(autoincrement())
+  genericMotorbikeId Int
+  imageResourceId    Int
+  title              String
+  excerpt            String?
+  createdAt          DateTime         @default(now())
+  genericMotorbike   GenericMotorbike @relation(fields: [genericMotorbikeId], references: [id])
+  imageResource      ImageResource    @relation(fields: [imageResourceId], references: [id])
 }
 
 model Motorbike {
-  id String @default(uuid()) @id
-  name String
-  category Category
-  model_id String
-  recommended_price Int
-  description String
-  details MotorbikeDetails[]
-  engineSpecs Json
-  chassisSpecs Json
-  sizeSpecs Json
-  warrantySpecs Json
-  gallery MotorBikePictures[]
-  model Model @relation(fields: [model_id], references: [id], onDelete: Cascade)
-  variants MotorbikeVariant[]
+  id                    Int               @id @default(autoincrement())
+  genericMotorbikeId    Int
+  chassisCode           String?
+  engineCode            String?
+  price                 Int
+  arrivedToInventoryAt  DateTime?
+  isSold                Boolean           @default(false)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  genericMotorbike      GenericMotorbike  @relation(fields: [genericMotorbikeId], references: [id])
+  orderItems            OrderItem[]
 }
 
-model MotorbikeVariant {
-  id String @default(uuid()) @id
-  motorbike_id String
-  color_id String
-  
-  displayPictures VariantDisplayPicture[]
-
-  motorbike Motorbike @relation(fields: [motorbike_id], references: [id], onDelete: Cascade)
-  color Color @relation(fields: [color_id], references: [id], onDelete: Cascade)
+model Order {
+  id                Int         @id @default(autoincrement())
+  publicOrderId     String      @unique
+  status            OrderStatus @default(CREATED)
+  total             Int
+  cancelReason      String?
+  createdAt         DateTime    @default(now())
+  confirmedAt       DateTime?
+  startedDeliveryAt DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  customerName      String
+  customerPhone     String
+  customerAddress   String
+  customerEmail     String
+  orderItems        OrderItem[]
 }
 
-model Color {
-  id String @default(uuid()) @id
-  name String
-  hex String
-  variants MotorbikeVariant[]
+model Charge {
+  id              Int       @id @default(autoincrement())
+  transaction_id  String    @unique
+  orderId         Int
+  amount          Int
+  createdAt       DateTime  @default(now())
 }
 
-model VariantDisplayPicture {
-  resource_id String
-  variant_id String
-
-  resource Resource @relation(fields: [resource_id], references: [id])
-  variant MotorbikeVariant @relation(fields: [variant_id], references: [id])
-
-  @@id([resource_id, variant_id])
+model OrderItem {
+  id          Int       @id @default(autoincrement())
+  orderId     Int
+  motorbikeId Int
+  quantity    Int
+  createdAt   DateTime  @default(now())
+  order       Order     @relation(fields: [orderId], references: [id])
+  motorbike   Motorbike @relation(fields: [motorbikeId], references: [id])
 }
 
-model Post {
-  id String @default(uuid()) @id
-  title String
-  thumbnail_resource_id String 
-  content String
-  created_at DateTime
-  modified_at DateTime
-  views Int @default(0)
-
-  thumbnail Resource @relation(fields: [thumbnail_resource_id], references: [id])
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  isAdmin      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
