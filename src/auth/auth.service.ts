@@ -32,12 +32,12 @@ export class AuthService {
 
     async validate(sessionId: string) {
         if (!sessionId) {
-            throw new UnauthorizedException();
+            return false;
         }
 
         const isValidSession = await this.cacheManager.get(sessionId);
         if (!isValidSession) {
-            throw new UnauthorizedException();
+            return false;
         }
 
         await this.cacheManager.set(

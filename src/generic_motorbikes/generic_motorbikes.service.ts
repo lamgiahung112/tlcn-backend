@@ -1,6 +1,7 @@
 import { PrismaService } from "@/shared/PrismaClient";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { UpsertGenericMotorbikeDto } from "./dto/UpsertGenericMotorbikeDto";
+import { Category, Prisma } from "@prisma/client";
 
 @Injectable()
 export class GenericMotorbikeService {
@@ -105,5 +106,47 @@ export class GenericMotorbikeService {
         });
 
         return { message: `Generic motorbike with ID ${id} has been deleted` };
+    }
+
+    async paginate(page: number = 1, perPage: number = 10, name?: string, category?: Category, minPrice: number = 0, maxPrice: number = Number.MAX_SAFE_INTEGER) {
+        const skip = (page - 1) * perPage;
+
+        const where: Prisma.GenericMotorbikeWhereInput = {
+            recommendedPrice: {
+                gte: minPrice,
+                lte: maxPrice
+            }
+        }
+        if (name) {
+            where.name = {
+                contains: name,
+                mode: 'insensitive'
+            }
+        }
+        if (category) {
+            where.category = category
+        }
+
+        const [items, total] = await Promise.all([
+            this.prisma.genericMotorbike.findMany({
+                where,
+                skip,
+                take: perPage,
+                orderBy: { createdAt: 'desc' },
+            }),
+            this.prisma.genericMotorbike.count({ where }),
+        ]);
+
+        const totalPages = Math.ceil(total / perPage);
+
+        return {
+            items,
+            meta: {
+                total,
+                page,
+                perPage,
+                totalPages,
+            },
+        };
     }
 }

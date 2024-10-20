@@ -20,18 +20,20 @@ export class AuthController {
             loginDto.password
         );
         return {
-            data: { sessionId }
+            sessionId
         };
     }
 
     @Get()
     async validateSession(@Headers('x-session-id') sessionId: string) {
         if (!sessionId) {
-            throw new UnauthorizedException();
+            return {
+                isAuthenticated: false
+            }
         }
-        await this.authService.validate(sessionId);
+        
         return {
-            data: { isAuthenticated: true }
+            isAuthenticated: await this.authService.validate(sessionId)
         };
     }
 }
