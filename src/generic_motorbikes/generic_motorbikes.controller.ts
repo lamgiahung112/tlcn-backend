@@ -1,28 +1,44 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Param,
+    Post,
+    Put,
+    Query
+} from '@nestjs/common';
 import { UpsertGenericMotorbikeDto } from './dto/UpsertGenericMotorbikeDto';
 import { GenericMotorbikeService } from './generic_motorbikes.service';
 import { FilterGenericMotorbikeDto } from './dto/FilterGenericMotorbikeDto';
 
 @Controller('generic_motorbikes')
 export class GenericMotorbikeController {
-    constructor(private readonly genericMotorbikeService: GenericMotorbikeService) {}
+    constructor(
+        private readonly genericMotorbikeService: GenericMotorbikeService
+    ) {}
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
     async createGenericMotorbike(@Body() body: UpsertGenericMotorbikeDto) {
-        this.genericMotorbikeService.create(body)
+        this.genericMotorbikeService.create(body);
     }
 
     @Put('/:id')
     @HttpCode(HttpStatus.OK)
-    async updateGenericMotorbike(@Body() body: UpsertGenericMotorbikeDto, @Param('id') id: number) {
-        this.genericMotorbikeService.update(id, body)
+    async updateGenericMotorbike(
+        @Body() body: UpsertGenericMotorbikeDto,
+        @Param('id') id: number
+    ) {
+        this.genericMotorbikeService.update(id, body);
     }
 
     @Delete('/:id')
     @HttpCode(HttpStatus.NO_CONTENT)
     async deleteGenericMotorbike(@Param('id') id: number) {
-        this.genericMotorbikeService.delete(id)
+        this.genericMotorbikeService.delete(id);
     }
 
     @Get()
@@ -34,7 +50,13 @@ export class GenericMotorbikeController {
             queries.name,
             queries.category,
             queries.minPrice ?? 0,
-            queries.maxPrice ?? 32767
-        )
+            queries.maxPrice ?? 600000000
+        );
+    }
+
+    @Get('/:id')
+    @HttpCode(HttpStatus.OK)
+    async findById(@Param('id') id: number) {
+        return this.genericMotorbikeService.findById(id);
     }
 }

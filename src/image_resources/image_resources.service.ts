@@ -1,5 +1,5 @@
 import { PrismaService } from '@/shared/PrismaClient';
-import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, ObjectCannedACL, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
@@ -23,7 +23,8 @@ export class ImageResourcesService {
             Bucket: bucket,
             Key: s3Key,
             Body: file.buffer,
-            ContentType: file.mimetype
+            ContentType: file.mimetype,
+            ACL: ObjectCannedACL.public_read
         });
 
         try {

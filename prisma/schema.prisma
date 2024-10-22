@@ -28,7 +28,6 @@ model ImageResource {
   s3Key                 String
   createdAt             DateTime                @default(now())
   GenericMotorbikeImage GenericMotorbikeImage[]
-  GenericMotorbikeDetail GenericMotorbikeDetail[]
 }
 
 model GenericMotorbike {
@@ -47,7 +46,6 @@ model GenericMotorbike {
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
   images                GenericMotorbikeImage[]
-  details               GenericMotorbikeDetail[]
   motorbikes            Motorbike[]
 }
 
@@ -56,17 +54,6 @@ model GenericMotorbikeImage {
   genericMotorbikeId Int
   imageResourceId    Int
   isGallery          Boolean          @default(false)
-  createdAt          DateTime         @default(now())
-  genericMotorbike   GenericMotorbike @relation(fields: [genericMotorbikeId], references: [id])
-  imageResource      ImageResource    @relation(fields: [imageResourceId], references: [id])
-}
-
-model GenericMotorbikeDetail {
-  id                 Int              @id @default(autoincrement())
-  genericMotorbikeId Int
-  imageResourceId    Int
-  title              String
-  excerpt            String?
   createdAt          DateTime         @default(now())
   genericMotorbike   GenericMotorbike @relation(fields: [genericMotorbikeId], references: [id])
   imageResource      ImageResource    @relation(fields: [imageResourceId], references: [id])

@@ -22,16 +22,6 @@ export class GenericMotorbikeService {
                 warrantySpecs: params.warrantySpecs,
             }
         });
-        await this.prisma.genericMotorbikeDetail.createMany({
-            data: params.details.map((d) => {
-                return {
-                    genericMotorbikeId: gMotorbike.id,
-                    imageResourceId: d.imageResourceId,
-                    title: d.title,
-                    excerpt: d.excerpt
-                };
-            })
-        });
         await this.prisma.genericMotorbikeImage.createMany({
             data: params.images.map((i) => {
                 return {
@@ -48,7 +38,6 @@ export class GenericMotorbikeService {
             where: { id },
             include: {
                 images: true,
-                details: true,
             },
         });
 
@@ -74,18 +63,9 @@ export class GenericMotorbikeService {
                         isGallery: image.isGallery,
                     })),
                 },
-                details: {
-                    deleteMany: {},
-                    create: updateGenericMotorbikeDto.details.map(detail => ({
-                        imageResourceId: detail.imageResourceId,
-                        title: detail.title,
-                        excerpt: detail.excerpt,
-                    })),
-                },
             },
             include: {
                 images: true,
-                details: true,
             },
         });
 
@@ -106,6 +86,22 @@ export class GenericMotorbikeService {
         });
 
         return { message: `Generic motorbike with ID ${id} has been deleted` };
+    }
+
+    async findById(id: number) {
+        return this.prisma.genericMotorbike.findFirst({
+            where: {
+                id
+            },
+            include: {
+                images: {
+                    select: {
+                        imageResource: true,
+                        isGallery: true
+                    },
+                }
+            }
+        })   
     }
 
     async paginate(page: number = 1, perPage: number = 10, name?: string, category?: Category, minPrice: number = 0, maxPrice: number = Number.MAX_SAFE_INTEGER) {
@@ -133,6 +129,14 @@ export class GenericMotorbikeService {
                 skip,
                 take: perPage,
                 orderBy: { createdAt: 'desc' },
+                include: {
+                    images: {
+                        select: {
+                            imageResource: true,
+                            isGallery: true
+                        },
+                    }
+                }
             }),
             this.prisma.genericMotorbike.count({ where }),
         ]);

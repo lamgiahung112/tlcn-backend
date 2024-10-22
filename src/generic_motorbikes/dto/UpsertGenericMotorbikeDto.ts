@@ -1,7 +1,13 @@
 import { Category } from '@prisma/client';
 import { UpserGenericMotorbikeImageDto } from './UpsertGenericMotorbikeImageDto';
-import { UpserGenericMotorbikeDetailDto } from './UpsertGenericMotorbikeDetailDto';
-import { IsArray, IsInt, IsNumber, IsObject, IsString, ValidateNested } from 'class-validator';
+import {
+    IsArray,
+    IsInt,
+    IsNumber,
+    IsObject,
+    IsString,
+    ValidateNested
+} from 'class-validator';
 
 export class UpsertGenericMotorbikeDto {
     @IsString()
@@ -12,7 +18,7 @@ export class UpsertGenericMotorbikeDto {
     name: string;
     @IsNumber()
     @IsInt()
-    recommendedPrice: number
+    recommendedPrice: number;
     @IsString()
     description: string;
     @IsObject()
@@ -24,7 +30,4 @@ export class UpsertGenericMotorbikeDto {
     @IsArray()
     @ValidateNested()
     images: UpserGenericMotorbikeImageDto[];
-    @IsArray()
-    @ValidateNested()
-    details: UpserGenericMotorbikeDetailDto[];
 }
