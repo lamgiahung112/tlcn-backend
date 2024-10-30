@@ -99,7 +99,8 @@ export class GenericMotorbikeService {
                         imageResource: true,
                         isGallery: true
                     },
-                }
+                },
+                motorbikes: true
             }
         })   
     }
@@ -116,7 +117,6 @@ export class GenericMotorbikeService {
         if (name) {
             where.name = {
                 contains: name,
-                mode: 'insensitive'
             }
         }
         if (category) {

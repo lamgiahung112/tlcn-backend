@@ -74,7 +74,6 @@ export class ImageResourcesService {
         const where: Prisma.ImageResourceWhereInput = name ? {
             filename: {
                 contains: name,
-                mode: 'insensitive' // This makes the search case-insensitive
             }
         } : {};
 
