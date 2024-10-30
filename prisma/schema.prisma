@@ -36,7 +36,7 @@ model GenericMotorbike {
   model                 String
   name                  String
   recommendedPrice      Int
-  description           String?
+  description           String?                 @db.Text  
   colorInHex            String?                 @db.Char(7)
   colorName             String?
   engineSpecs           Json?
@@ -47,6 +47,7 @@ model GenericMotorbike {
   updatedAt             DateTime                @updatedAt
   images                GenericMotorbikeImage[]
   motorbikes            Motorbike[]
+  orderCartItems        OrderCartItem[]
 }
 
 model GenericMotorbikeImage {
@@ -89,6 +90,7 @@ model Order {
   customerAddress   String
   customerEmail     String
   orderItems        OrderItem[]
+  orderCartItems    OrderCartItem[]
 }
 
 model Charge {
@@ -99,11 +101,20 @@ model Charge {
   createdAt       DateTime  @default(now())
 }
 
+model OrderCartItem {
+  id                  Int       @id @default(autoincrement())
+  orderId             Int
+  genericMotorbikeId  Int
+  quantity            Int
+  createdAt           DateTime  @default(now())
+  order               Order     @relation(fields: [orderId], references: [id])
+  genericMotorbike    GenericMotorbike @relation(fields: [genericMotorbikeId], references: [id])
+}
+
 model OrderItem {
   id          Int       @id @default(autoincrement())
   orderId     Int
   motorbikeId Int
-  quantity    Int
   createdAt   DateTime  @default(now())
   order       Order     @relation(fields: [orderId], references: [id])
   motorbike   Motorbike @relation(fields: [motorbikeId], references: [id])

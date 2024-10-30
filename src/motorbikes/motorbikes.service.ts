@@ -24,12 +24,10 @@ export class MotorbikeService {
             data: results.map(row => {
                 return {
                     genericMotorbikeId,
-                    price: row.price,
+                    price: Number(row.price),
                     chassisCode: row.chassisCode,
                     engineCode: row.engineCode,
                     arrivedToInventoryAt: new Date(row.arrivedToInventoryAt),
-                    colorInHex: row.colorInHex,
-                    colorName: row.colorName,
                 }
             })
         });

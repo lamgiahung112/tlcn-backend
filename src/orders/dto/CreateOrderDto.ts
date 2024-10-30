@@ -1,22 +1,16 @@
 import {
     IsArray,
     IsBoolean,
-    IsCreditCard,
     IsNumber,
     IsObject,
-    IsOptional,
     IsString,
-    Max,
-    MaxLength,
-    Min,
-    MinLength,
     ValidateNested
 } from 'class-validator';
 
 
 class CartItem {
     @IsNumber()
-    motorbikeId: number;
+    genericMotorbikeId: number;
 
     @IsNumber()
     quantity: number;

@@ -13,22 +13,29 @@ export class OrdersService {
     ) {}
 
     async createOrder(data: CreateOrderDto) {
-        const items = await this.prisma.motorbike.findMany({
-            where: {
-                id: {
-                    in: data.cart.map((item) => item.motorbikeId)
+        const availableMotorbikes = await Promise.all(
+            data.cart.map(async (cartItem) => {
+                const motorbikes = await this.prisma.motorbike.findMany({
+                    where: {
+                        genericMotorbikeId: cartItem.genericMotorbikeId,
+                        isSold: false
+                    },
+                    take: cartItem.quantity
+                });
+
+                if (motorbikes.length < cartItem.quantity) {
+                    throw new BadRequestException(
+                        `Not enough available motorbikes with ID ${cartItem.genericMotorbikeId}`
+                    );
                 }
-            }
-        });
-        const total = items.reduce(
-            (prev, accumulate) =>
-                prev +
-                accumulate.id *
-                    data.cart.find(
-                        (cartitem) => cartitem.motorbikeId === accumulate.id
-                    ).quantity,
-            0
+
+                return motorbikes;
+            })
         );
+
+        const flatMotorbikes = availableMotorbikes.flat();
+        const total = flatMotorbikes.reduce((prev, curr) => prev + curr.price, 0);
+
         const order = await this.prisma.order.create({
             data: {
                 customerName: data.customer.customerName,
@@ -40,7 +47,22 @@ export class OrdersService {
                 total,
                 orderItems: {
                     createMany: {
-                        data: data.cart
+                        data: flatMotorbikes.map(motorbike => {
+                            return {
+                                motorbikeId: motorbike.id,
+                                createdAt: new Date()
+                            }
+                        })
+                    }
+                },
+                orderCartItems: {
+                    createMany: {
+                        data: data.cart.map(cartItem => {
+                            return {
+                                genericMotorbikeId: cartItem.genericMotorbikeId,
+                                quantity: cartItem.quantity
+                            }
+                        })
                     }
                 },
                 status: OrderStatus.CREATED
@@ -49,7 +71,7 @@ export class OrdersService {
 
         const paymentResult = await this.paymentService.tryPayment(
             data.paymentMethodId,
-            data.onlyPayDeposit ? order.total / 10 : order.total,
+            order.total,
             order.id
         );
 
@@ -65,9 +87,9 @@ export class OrdersService {
         }
 
         await this.prisma.motorbike.updateMany({
-            data: items.map(item => {
+            data: flatMotorbikes.map(motorbike => {
                 return {
-                    ...item,
+                    ...motorbike,
                     isSold: true
                 }
             })

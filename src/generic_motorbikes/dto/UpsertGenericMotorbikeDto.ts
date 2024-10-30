@@ -16,6 +16,10 @@ export class UpsertGenericMotorbikeDto {
     model: string;
     @IsString()
     name: string;
+    @IsString()
+    colorInHex: string;
+    @IsString()
+    colorName: string;
     @IsNumber()
     @IsInt()
     recommendedPrice: number;
