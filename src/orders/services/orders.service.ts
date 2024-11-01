@@ -156,6 +156,51 @@ export class OrdersService {
         });
     }
 
+    async getAdminOrder(publicOrderId: string) {
+        return this.prisma.order.findUnique({
+            where: {
+                publicOrderId
+            },
+            include: {
+                orderItems: {
+                    select: {
+                        motorbike: {
+                            select: {
+                                genericMotorbikeId: true,
+                                price: true,
+                                engineCode: true,
+                                chassisCode: true
+                            }
+                        }
+                    }
+                },
+                orderCartItems: {
+                    select: {
+                        genericMotorbike: {
+                            select: {
+                                id: true,
+                                images: {
+                                    where: {
+                                        isGallery: false
+                                    },
+                                    select: {
+                                        imageResource: true
+                                    },
+                                    take: 1
+                                },
+                                name: true,
+                                colorInHex: true,
+                                colorName: true,
+                                category: true
+                            }
+                        }
+                    }
+                },
+                charge: true
+            }
+        });
+    }
+
     async filterOrders(data: FilterOrderDto) {
         const total = await this.prisma.order.count({
             where: {
@@ -186,10 +231,10 @@ export class OrdersService {
         };
     }
 
-    async confirmOrder(orderId: number) {
+    async confirmOrder(publicOrderId: string) {
         await this.prisma.order.update({
             where: {
-                id: orderId
+                publicOrderId
             },
             data: {
                 status: OrderStatus.CONFIRMED,
@@ -198,10 +243,10 @@ export class OrdersService {
         });
     }
 
-    async markOrderStartedDelivery(orderId: number) {
+    async markOrderStartedDelivery(publicOrderId: string) {
         await this.prisma.order.update({
             where: {
-                id: orderId
+                publicOrderId
             },
             data: {
                 status: OrderStatus.DELIVERY_STARTED,
@@ -210,10 +255,10 @@ export class OrdersService {
         });
     }
 
-    async markOrderComplete(orderId: number) {
+    async markOrderComplete(publicOrderId: string) {
         await this.prisma.order.update({
             where: {
-                id: orderId
+                publicOrderId
             },
             data: {
                 status: OrderStatus.COMPLETED,
@@ -222,10 +267,10 @@ export class OrdersService {
         });
     }
 
-    async cancelOrder(orderId: number, reason: string) {
-        this.prisma.order.update({
+    async cancelOrder(publicOrderId: string, reason: string) {
+        await this.prisma.order.update({
             where: {
-                id: orderId
+                publicOrderId
             },
             data: {
                 status: OrderStatus.CANCELLED,

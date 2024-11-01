@@ -22,4 +22,29 @@ export class OrdersController {
     async getOrder(@Param('publicOrderId') publicOrderId: string, @Body('email') email: string) {
         return this.orderService.getByPublicOrderIdAndEmail(publicOrderId, email);
     }
+
+    @Get('admin/:publicOrderId')
+    async getAdminOrder(@Param('publicOrderId') publicOrderId: string) {
+        return this.orderService.getAdminOrder(publicOrderId);
+    }
+
+    @Post('admin/:publicOrderId/confirm')
+    async confirmOrder(@Param('publicOrderId') publicOrderId: string) {
+        return this.orderService.confirmOrder(publicOrderId);
+    }
+
+    @Post('admin/:publicOrderId/start-delivery')
+    async startDelivery(@Param('publicOrderId') publicOrderId: string) {
+        return this.orderService.markOrderStartedDelivery(publicOrderId);
+    }
+
+    @Post('admin/:publicOrderId/complete')
+    async completeOrder(@Param('publicOrderId') publicOrderId: string) {
+        return this.orderService.markOrderComplete(publicOrderId);
+    }
+
+    @Post('admin/:publicOrderId/cancel')
+    async cancelOrder(@Param('publicOrderId') publicOrderId: string, @Body('reason') reason: string) {
+        return this.orderService.cancelOrder(publicOrderId, reason);
+    }
 }
