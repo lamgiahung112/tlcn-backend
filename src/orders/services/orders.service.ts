@@ -4,6 +4,7 @@ import { CreateOrderDto } from '../dto';
 import { randomUUID } from 'crypto';
 import { OrderStatus } from '@prisma/client';
 import { PaymentService } from '@/payment/payment.service';
+import { FilterOrderDto } from '../dto/FilterOrderDto';
 
 @Injectable()
 export class OrdersService {
@@ -34,7 +35,10 @@ export class OrdersService {
         );
 
         const flatMotorbikes = availableMotorbikes.flat();
-        const total = flatMotorbikes.reduce((prev, curr) => prev + curr.price, 0);
+        const total = flatMotorbikes.reduce(
+            (prev, curr) => prev + curr.price,
+            0
+        );
 
         const order = await this.prisma.order.create({
             data: {
@@ -47,21 +51,21 @@ export class OrdersService {
                 total,
                 orderItems: {
                     createMany: {
-                        data: flatMotorbikes.map(motorbike => {
+                        data: flatMotorbikes.map((motorbike) => {
                             return {
                                 motorbikeId: motorbike.id,
                                 createdAt: new Date()
-                            }
+                            };
                         })
                     }
                 },
                 orderCartItems: {
                     createMany: {
-                        data: data.cart.map(cartItem => {
+                        data: data.cart.map((cartItem) => {
                             return {
                                 genericMotorbikeId: cartItem.genericMotorbikeId,
                                 quantity: cartItem.quantity
-                            }
+                            };
                         })
                     }
                 },
@@ -71,8 +75,7 @@ export class OrdersService {
 
         const paymentResult = await this.paymentService.tryPayment(
             data.paymentMethodId,
-            order.total,
-            order.id
+            order.total
         );
 
         if (!paymentResult.success) {
@@ -87,13 +90,15 @@ export class OrdersService {
         }
 
         await this.prisma.motorbike.updateMany({
-            data: flatMotorbikes.map(motorbike => {
-                return {
-                    ...motorbike,
-                    isSold: true
+            data: {
+                isSold: true
+            },
+            where: {
+                id: {
+                    in: flatMotorbikes.map((motorbike) => motorbike.id)
                 }
-            })
-        })
+            }
+        });
         await this.prisma.charge.create({
             data: {
                 amount: paymentResult.amount,
@@ -105,12 +110,80 @@ export class OrdersService {
         return order;
     }
 
-    async getByPublicOrderId(publicOrderId: string) {
+    async getByPublicOrderIdAndEmail(publicOrderId: string, email: string) {
         return this.prisma.order.findUnique({
             where: {
-                publicOrderId
+                publicOrderId,
+                customerEmail: email
+            },
+            include: {
+                orderItems: {
+                    select: {
+                        motorbike: {
+                            select: {
+                                genericMotorbikeId: true,
+                                price: true,
+                                engineCode: true,
+                                chassisCode: true
+                            }
+                        }
+                    }
+                },
+                orderCartItems: {
+                    select: {
+                        genericMotorbike: {
+                            select: {
+                                id: true,
+                                images: {
+                                    where: {
+                                        isGallery: false
+                                    },
+                                    select: {
+                                        imageResource: true
+                                    },
+                                    take: 1
+                                },
+                                name: true,
+                                colorInHex: true,
+                                colorName: true,
+                                category: true
+                            }
+                        }
+                    }
+                },
+                charge: true
             }
         });
+    }
+
+    async filterOrders(data: FilterOrderDto) {
+        const total = await this.prisma.order.count({
+            where: {
+                publicOrderId: {
+                    contains: data.publicOrderId
+                },
+                status: data.status
+            },
+            skip: (data.page - 1) * data.perPage,
+            take: data.perPage
+        });
+        const orders = await this.prisma.order.findMany({
+            where: {
+                publicOrderId: {
+                    contains: data.publicOrderId
+                },
+                status: data.status
+            },
+            skip: (data.page - 1) * data.perPage,
+            take: data.perPage
+        });
+        return {
+            items: orders,
+            meta: {
+                total,
+                totalPages: Math.ceil(total / data.perPage)
+            }
+        };
     }
 
     async confirmOrder(orderId: number) {
@@ -134,7 +207,7 @@ export class OrdersService {
                 status: OrderStatus.DELIVERY_STARTED,
                 startedDeliveryAt: new Date()
             }
-        })
+        });
     }
 
     async markOrderComplete(orderId: number) {
@@ -146,7 +219,7 @@ export class OrdersService {
                 status: OrderStatus.COMPLETED,
                 completedAt: new Date()
             }
-        })
+        });
     }
 
     async cancelOrder(orderId: number, reason: string) {
@@ -159,6 +232,6 @@ export class OrdersService {
                 cancelledAt: new Date(),
                 cancelReason: reason
             }
-        })
+        });
     }
 }

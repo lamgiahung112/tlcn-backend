@@ -91,14 +91,16 @@ model Order {
   customerEmail     String
   orderItems        OrderItem[]
   orderCartItems    OrderCartItem[]
+  charge            Charge?
 }
 
 model Charge {
   id              Int       @id @default(autoincrement())
   transaction_id  String    @unique
-  orderId         Int
+  orderId         Int       @unique
   amount          Int
   createdAt       DateTime  @default(now())
+  order           Order     @relation(fields: [orderId], references: [id])
 }
 
 model OrderCartItem {

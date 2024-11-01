@@ -8,7 +8,6 @@ export class PaymentService {
     async tryPayment(
         paymentMethodId: string,
         amount: number,
-        orderId: number
     ) {
         if (paymentMethodId === 'invalid') {
             return {

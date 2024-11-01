@@ -7,7 +7,6 @@ import {
     ValidateNested
 } from 'class-validator';
 
-
 class CartItem {
     @IsNumber()
     genericMotorbikeId: number;
@@ -36,9 +35,6 @@ export class CreateOrderDto {
     @ValidateNested()
     customer: CustomerData;
 
-    @IsBoolean()
-    onlyPayDeposit: boolean
-
     @IsString()
-    paymentMethodId: string
+    paymentMethodId: string;
 }
