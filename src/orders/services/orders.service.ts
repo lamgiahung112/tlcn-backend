@@ -1,16 +1,22 @@
 import { PrismaService } from '@/shared/PrismaClient';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    NotFoundException
+} from '@nestjs/common';
 import { CreateOrderDto } from '../dto';
 import { randomUUID } from 'crypto';
 import { OrderStatus } from '@prisma/client';
 import { PaymentService } from '@/payment/payment.service';
 import { FilterOrderDto } from '../dto/FilterOrderDto';
+import { MailerService } from '@/notifications/mailer.service';
 
 @Injectable()
 export class OrdersService {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly paymentService: PaymentService
+        private readonly paymentService: PaymentService,
+        private readonly mailerService: MailerService
     ) {}
 
     async createOrder(data: CreateOrderDto) {
@@ -73,22 +79,6 @@ export class OrdersService {
             }
         });
 
-        const paymentResult = await this.paymentService.tryPayment(
-            data.paymentMethodId,
-            order.total
-        );
-
-        if (!paymentResult.success) {
-            await this.prisma.order.delete({
-                where: {
-                    id: order.id
-                }
-            });
-            throw new BadRequestException(
-                paymentResult.error ?? 'Unexpected payment error'
-            );
-        }
-
         await this.prisma.motorbike.updateMany({
             data: {
                 isSold: true
@@ -99,13 +89,39 @@ export class OrdersService {
                 }
             }
         });
-        await this.prisma.charge.create({
+
+        const capture = await this.paymentService.captureOrder(
+            data.paypalOrderId
+        );
+        if (!capture) {
+            await this.cancelOrder(
+                order.publicOrderId,
+                'Payment capture failed'
+            );
+            throw new BadRequestException('Payment capture failed');
+        }
+
+        await this.prisma.order.update({
+            where: {
+                id: order.id
+            },
             data: {
-                amount: paymentResult.amount,
-                transaction_id: paymentResult.transaction_id,
-                orderId: order.id
+                paypalOrderId: data.paypalOrderId
             }
         });
+
+        const mailOrder = await this.getByPublicOrderIdAndEmail(
+            order.publicOrderId,
+            order.customerEmail
+        );
+        this.mailerService.sendMail(
+            data.customer.customerEmail,
+            'Order Confirmation - Yamaha',
+            'order_success',
+            {
+                order: mailOrder
+            }
+        );
 
         return order;
     }
@@ -150,14 +166,13 @@ export class OrdersService {
                             }
                         }
                     }
-                },
-                charge: true
+                }
             }
         });
     }
 
     async getAdminOrder(publicOrderId: string) {
-        return this.prisma.order.findUnique({
+        const order = await this.prisma.order.findUnique({
             where: {
                 publicOrderId
             },
@@ -188,6 +203,7 @@ export class OrdersService {
                                     },
                                     take: 1
                                 },
+                                warrantySpecs: true,
                                 name: true,
                                 colorInHex: true,
                                 colorName: true,
@@ -195,10 +211,18 @@ export class OrdersService {
                             }
                         }
                     }
-                },
-                charge: true
+                }
             }
         });
+        this.mailerService.sendMail(
+            order.customerEmail,
+            'Reminder for motorbike service',
+            'service_reminder',
+            {
+                order
+            }
+        );
+        return order;
     }
 
     async filterOrders(data: FilterOrderDto) {
@@ -232,51 +256,117 @@ export class OrdersService {
     }
 
     async confirmOrder(publicOrderId: string) {
-        await this.prisma.order.update({
-            where: {
-                publicOrderId
-            },
-            data: {
-                status: OrderStatus.CONFIRMED,
-                confirmedAt: new Date()
-            }
-        });
+        await this.prisma.order
+            .update({
+                where: {
+                    publicOrderId
+                },
+                data: {
+                    status: OrderStatus.CONFIRMED,
+                    confirmedAt: new Date()
+                }
+            })
+            .then(async (order) => {
+                const mailOrder = await this.getAdminOrder(order.publicOrderId);
+                this.mailerService.sendMail(
+                    order.customerEmail,
+                    'Order Updated - Yamaha',
+                    'order_status_updated',
+                    { order: mailOrder }
+                );
+            });
     }
 
     async markOrderStartedDelivery(publicOrderId: string) {
-        await this.prisma.order.update({
-            where: {
-                publicOrderId
-            },
-            data: {
-                status: OrderStatus.DELIVERY_STARTED,
-                startedDeliveryAt: new Date()
-            }
-        });
+        await this.prisma.order
+            .update({
+                where: {
+                    publicOrderId
+                },
+                data: {
+                    status: OrderStatus.DELIVERY_STARTED,
+                    startedDeliveryAt: new Date()
+                }
+            })
+            .then(async (order) => {
+                const mailOrder = await this.getAdminOrder(order.publicOrderId);
+                this.mailerService.sendMail(
+                    order.customerEmail,
+                    'Order Updated - Yamaha',
+                    'order_status_updated',
+                    { order: mailOrder }
+                );
+            });
     }
 
     async markOrderComplete(publicOrderId: string) {
-        await this.prisma.order.update({
-            where: {
-                publicOrderId
-            },
-            data: {
-                status: OrderStatus.COMPLETED,
-                completedAt: new Date()
-            }
-        });
+        await this.prisma.order
+            .update({
+                where: {
+                    publicOrderId
+                },
+                data: {
+                    status: OrderStatus.COMPLETED,
+                    completedAt: new Date()
+                }
+            })
+            .then(async (order) => {
+                const mailOrder = await this.getAdminOrder(order.publicOrderId);
+                this.mailerService.sendMail(
+                    order.customerEmail,
+                    'Order Updated - Yamaha',
+                    'order_status_updated',
+                    { order: mailOrder }
+                );
+            });
     }
 
     async cancelOrder(publicOrderId: string, reason: string) {
-        await this.prisma.order.update({
+        const order = await this.prisma.order.findUnique({
+            where: { publicOrderId },
+            include: {
+                orderItems: {
+                    include: {
+                        motorbike: true
+                    }
+                }
+            }
+        });
+
+        if (!order) {
+            throw new NotFoundException('Order not found');
+        }
+
+        // Update all motorbikes to not sold
+        await this.prisma.motorbike.updateMany({
             where: {
-                publicOrderId
+                id: {
+                    in: order.orderItems.map((item) => item.motorbikeId)
+                }
             },
+            data: {
+                isSold: false
+            }
+        });
+
+        // Update the order status
+        const updatedOrder = await this.prisma.order.update({
+            where: { publicOrderId },
             data: {
                 status: OrderStatus.CANCELLED,
                 cancelledAt: new Date(),
                 cancelReason: reason
             }
         });
+
+        // Send email notification
+        const mailOrder = await this.getAdminOrder(updatedOrder.publicOrderId);
+        this.mailerService.sendMail(
+            updatedOrder.customerEmail,
+            'Order Updated - Yamaha',
+            'order_status_updated',
+            { order: mailOrder }
+        );
+        return updatedOrder;
     }
 }

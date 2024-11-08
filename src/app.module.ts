@@ -6,17 +6,23 @@ import { GenericMotorbikeModule } from './generic_motorbikes/generic_motorbikes.
 import { MotorbikeModule } from './motorbikes/motorbikes.module';
 import { OrdersModule } from './orders/orders.module';
 import { CartModule } from './cart/cart.module';
+import { PaymentModule } from './payment/payment.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ScheduleModule } from '@nestjs/schedule';
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true
         }),
+        ScheduleModule.forRoot(),
         AuthModule,
         ImageResourcesModule,
         GenericMotorbikeModule,
         MotorbikeModule,
         OrdersModule,
-        CartModule
+        CartModule,
+        PaymentModule,
+        NotificationsModule
     ]
 })
 export class AppModule {}

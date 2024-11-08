@@ -36,5 +36,5 @@ export class CreateOrderDto {
     customer: CustomerData;
 
     @IsString()
-    paymentMethodId: string;
+    paypalOrderId: string;
 }

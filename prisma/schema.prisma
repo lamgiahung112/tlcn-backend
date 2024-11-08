@@ -77,6 +77,7 @@ model Motorbike {
 model Order {
   id                Int         @id @default(autoincrement())
   publicOrderId     String      @unique
+  paypalOrderId     String?     @unique
   status            OrderStatus @default(CREATED)
   total             Int
   cancelReason      String?
@@ -91,16 +92,6 @@ model Order {
   customerEmail     String
   orderItems        OrderItem[]
   orderCartItems    OrderCartItem[]
-  charge            Charge?
-}
-
-model Charge {
-  id              Int       @id @default(autoincrement())
-  transaction_id  String    @unique
-  orderId         Int       @unique
-  amount          Int
-  createdAt       DateTime  @default(now())
-  order           Order     @relation(fields: [orderId], references: [id])
 }
 
 model OrderCartItem {
