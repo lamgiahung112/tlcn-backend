@@ -14,4 +14,7 @@ export class FilterOrderDto {
     @IsOptional()
     @IsEnum(OrderStatus)
     status?: OrderStatus
+    @IsOptional()
+    @IsNumber()
+    customerId?: number
 }

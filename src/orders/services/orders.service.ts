@@ -6,10 +6,25 @@ import {
 } from '@nestjs/common';
 import { CreateOrderDto } from '../dto';
 import { randomUUID } from 'crypto';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Prisma } from '@prisma/client';
 import { PaymentService } from '@/payment/payment.service';
 import { FilterOrderDto } from '../dto/FilterOrderDto';
 import { MailerService } from '@/notifications/mailer.service';
+
+const serviceTokenRanges = [
+    // 10,000 km ranges
+    { maxOdo: 10000, minMonth: 1, maxMonth: 4 },
+    { maxOdo: 10000, minMonth: 5, maxMonth: 8 },
+    { maxOdo: 10000, minMonth: 9, maxMonth: 12 },
+    // 20,000 km ranges
+    { maxOdo: 20000, minMonth: 1, maxMonth: 4 },
+    { maxOdo: 20000, minMonth: 5, maxMonth: 8 },
+    { maxOdo: 20000, minMonth: 9, maxMonth: 12 },
+    // 30,000 km ranges
+    { maxOdo: 30000, minMonth: 1, maxMonth: 4 },
+    { maxOdo: 30000, minMonth: 5, maxMonth: 8 },
+    { maxOdo: 30000, minMonth: 9, maxMonth: 12 }
+];
 
 @Injectable()
 export class OrdersService {
@@ -19,7 +34,7 @@ export class OrdersService {
         private readonly mailerService: MailerService
     ) {}
 
-    async createOrder(data: CreateOrderDto) {
+    async createOrder(customerId: number, data: CreateOrderDto) {
         const availableMotorbikes = await Promise.all(
             data.cart.map(async (cartItem) => {
                 const motorbikes = await this.prisma.motorbike.findMany({
@@ -46,8 +61,24 @@ export class OrdersService {
             0
         );
 
+        flatMotorbikes.forEach(async (motorbike) => {
+            await Promise.all(
+                serviceTokenRanges.map((range) =>
+                    this.prisma.serviceToken.create({
+                        data: {
+                            motorbikeId: motorbike.id,
+                            minMonth: range.minMonth,
+                            maxMonth: range.maxMonth,
+                            maxOdometer: range.maxOdo
+                        }
+                    })
+                )
+            );
+        });
+
         const order = await this.prisma.order.create({
             data: {
+                customerId,
                 customerName: data.customer.customerName,
                 customerAddress: data.customer.customerAddress,
                 customerEmail: data.customer.customerEmail,
@@ -214,35 +245,27 @@ export class OrdersService {
                 }
             }
         });
-        this.mailerService.sendMail(
-            order.customerEmail,
-            'Reminder for motorbike service',
-            'service_reminder',
-            {
-                order
-            }
-        );
         return order;
     }
 
     async filterOrders(data: FilterOrderDto) {
-        const total = await this.prisma.order.count({
-            where: {
-                publicOrderId: {
-                    contains: data.publicOrderId
-                },
-                status: data.status
+        const where: Prisma.OrderWhereInput = {
+            publicOrderId: {
+                contains: data.publicOrderId
             },
+            status: data.status
+        };
+        if (data.customerId) {
+            where.customerId = data.customerId;
+        }
+
+        const total = await this.prisma.order.count({
+            where,
             skip: (data.page - 1) * data.perPage,
             take: data.perPage
         });
         const orders = await this.prisma.order.findMany({
-            where: {
-                publicOrderId: {
-                    contains: data.publicOrderId
-                },
-                status: data.status
-            },
+            where,
             skip: (data.page - 1) * data.perPage,
             take: data.perPage
         });
@@ -368,5 +391,50 @@ export class OrdersService {
             { order: mailOrder }
         );
         return updatedOrder;
+    }
+
+    async getOrderDetailsByCustomerId(
+        customerId: number,
+        publicOrderId: string
+    ) {
+        return this.prisma.order.findUnique({
+            where: { customerId, publicOrderId },
+            include: {
+                orderItems: {
+                    select: {
+                        motorbike: {
+                            select: {
+                                genericMotorbikeId: true,
+                                price: true,
+                                engineCode: true,
+                                chassisCode: true
+                            }
+                        }
+                    }
+                },
+                orderCartItems: {
+                    select: {
+                        genericMotorbike: {
+                            select: {
+                                id: true,
+                                images: {
+                                    where: {
+                                        isGallery: false
+                                    },
+                                    select: {
+                                        imageResource: true
+                                    },
+                                    take: 1
+                                },
+                                name: true,
+                                colorInHex: true,
+                                colorName: true,
+                                category: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 }

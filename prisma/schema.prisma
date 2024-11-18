@@ -68,31 +68,49 @@ model Motorbike {
   engineCode            String?
   price                 Int
   arrivedToInventoryAt  DateTime?
+  plateNumber           String?
+  odometer              Int               @default(0)
   isSold                Boolean           @default(false)
+  soldAt                DateTime?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   genericMotorbike      GenericMotorbike  @relation(fields: [genericMotorbikeId], references: [id])
   orderItems            OrderItem[]
+  serviceTokens       ServiceToken[]
+}
+
+model ServiceToken {
+  id                    Int               @id @default(autoincrement())
+  motorbikeId           Int
+  minMonth              Int
+  maxMonth              Int
+  maxOdometer           Int
+  isEligible            Boolean           @default(true)
+  usedAt                DateTime?
+  createdAt             DateTime          @default(now())
+  motorbike             Motorbike         @relation(fields: [motorbikeId], references: [id])
 }
 
 model Order {
-  id                Int         @id @default(autoincrement())
-  publicOrderId     String      @unique
-  paypalOrderId     String?     @unique
-  status            OrderStatus @default(CREATED)
+  id                Int             @id @default(autoincrement())
+  publicOrderId     String          @unique
+  paypalOrderId     String?         @unique
+  status            OrderStatus     @default(CREATED)
   total             Int
   cancelReason      String?
-  createdAt         DateTime    @default(now())
+  createdAt         DateTime        @default(now())
   confirmedAt       DateTime?
   startedDeliveryAt DateTime?
   completedAt       DateTime?
   cancelledAt       DateTime?
+  customerId        Int
   customerName      String
   customerPhone     String
   customerAddress   String
   customerEmail     String
   orderItems        OrderItem[]
   orderCartItems    OrderCartItem[]
+  customer          User            @relation(fields: [customerId], references: [id])
 }
 
 model OrderCartItem {
@@ -125,3 +143,12 @@ model Post {
   updatedAt             DateTime      @updatedAt
   thumbnailResource     ImageResource @relation(fields: [thumbnailResourceId], references: [id])
 }
+
+model User {
+  id          Int       @id @default(autoincrement())
+  email       String    @unique
+  name        String
+  phoneNumber String
+  orders      Order[]
+}
+

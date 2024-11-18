@@ -10,6 +10,7 @@ import { PaymentModule } from './payment/payment.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PostModule } from './post/post.module';
+import ServiceTokensModule from './service_tokens/service_tokens.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -24,7 +25,8 @@ import { PostModule } from './post/post.module';
         CartModule,
         PaymentModule,
         NotificationsModule,
-        PostModule
+        PostModule,
+        ServiceTokensModule
     ]
 })
 export class AppModule {}

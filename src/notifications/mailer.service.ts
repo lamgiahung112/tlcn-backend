@@ -39,7 +39,7 @@ export class MailerService {
                 from: process.env.EMAIL_SENDER,
                 to,
                 subject,
-                html
+                html,
             });
             console.log('Email sent: ' + info.response);
         } catch (error) {

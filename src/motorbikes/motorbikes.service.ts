@@ -1,5 +1,6 @@
 import { PrismaService } from "@/shared/PrismaClient";
 import { Injectable, BadRequestException } from "@nestjs/common";
+import { OrderStatus } from "@prisma/client";
 import * as csv from 'csv-parse';
 import { Readable } from 'stream';
 
@@ -63,5 +64,71 @@ export class MotorbikeService {
                 .on('end', () => resolve(results))
                 .on('error', (error) => reject(error));
         });
+    }
+
+    async getMotorbikesByCustomerId(customerId: number) {
+        const orders = await this.prisma.order.findMany({
+            where: { customerId, status: OrderStatus.COMPLETED },
+            include: {
+                orderItems: {
+                    select: {
+                        motorbike: {
+                            include: {
+                                genericMotorbike: {
+                                    include: {
+                                        images: {
+                                            select: {
+                                                imageResource: {
+                                                    select: {
+                                                        s3Key: true
+                                                    }
+                                                }
+                                            },
+                                            where: {
+                                                isGallery: false,
+                                            },
+                                            take: 1
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const motorbikes = []
+        orders.forEach(order => {
+            order.orderItems.forEach(item => {
+                motorbikes.push(item.motorbike)
+            })
+        })
+        return motorbikes;
+    }
+
+    async getMotorbikeDetailId(motorbikeId: number) {
+        return this.prisma.motorbike.findUnique({
+            where: { id: motorbikeId },
+            include: {
+                genericMotorbike: {
+                    include: {
+                        images: {
+                            select: {
+                                imageResource: {
+                                    select: {
+                                        s3Key: true
+                                    }
+                                }
+                            },
+                            where: {
+                                isGallery: false,
+                            },
+                            take: 1
+                        }
+                    }
+                }
+            }
+        })
     }
 }
