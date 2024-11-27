@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum CouponType {
+  PERCENTAGE
+  FIXED
+  ITEM
+}
 
 enum Category {
   SCOOTER
@@ -29,6 +34,7 @@ model ImageResource {
   createdAt             DateTime                @default(now())
   GenericMotorbikeImage GenericMotorbikeImage[]
   Post                  Post[]
+  Coupon                Coupon[]
 }
 
 model GenericMotorbike {
@@ -89,6 +95,7 @@ model ServiceToken {
   usedAt                DateTime?
   createdAt             DateTime          @default(now())
   motorbike             Motorbike         @relation(fields: [motorbikeId], references: [id])
+  serviceAppointments   ServiceAppointment[]
 }
 
 model Order {
@@ -108,8 +115,10 @@ model Order {
   customerPhone     String
   customerAddress   String
   customerEmail     String
+  couponId          Int?
   orderItems        OrderItem[]
   orderCartItems    OrderCartItem[]
+  coupon            Coupon?         @relation(fields: [couponId], references: [id])
   customer          User            @relation(fields: [customerId], references: [id])
 }
 
@@ -150,5 +159,30 @@ model User {
   name        String
   phoneNumber String
   orders      Order[]
+}
+
+model Coupon {
+  id                    Int             @id @default(autoincrement())
+  code                  String          @unique
+  discount              Int             @default(0)
+  type                  CouponType
+  itemImageResourceId   Int?
+  itemName              String?
+  createdAt             DateTime        @default(now())
+  expiredAt             DateTime?
+  maxUsage              Int?
+  isPublished           Boolean         @default(false)
+  itemImageResource     ImageResource?  @relation(fields: [itemImageResourceId], references: [id])
+  orders                Order[]
+}
+
+model ServiceAppointment {
+  id                Int           @id @default(autoincrement())
+  serviceTokenId    Int
+  date              DateTime
+  cancelledAt       DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime      @default(now())
+  serviceToken      ServiceToken? @relation(fields: [serviceTokenId], references: [id])
 }
 

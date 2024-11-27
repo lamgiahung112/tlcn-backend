@@ -11,66 +11,59 @@ export class SchedulerService {
         private readonly mailerService: MailerService
     ) {}
 
-    @Cron(CronExpression.EVERY_DAY_AT_9AM)
+    @Cron(CronExpression.EVERY_WEEK)
     async remindMotorbikeForService() {
-        const orders = await this.prisma.order.findMany({
+        const completedOrders = await this.prisma.order.findMany({
             where: {
                 status: OrderStatus.COMPLETED
             },
             include: {
                 orderItems: {
-                    select: {
-                        motorbike: {
-                            select: {
-                                genericMotorbikeId: true,
-                                price: true,
-                                engineCode: true,
-                                chassisCode: true
-                            }
-                        }
+                    include: {
+                        motorbike: true
                     }
                 },
-                orderCartItems: {
-                    select: {
-                        genericMotorbike: {
-                            select: {
-                                id: true,
-                                images: {
-                                    where: {
-                                        isGallery: false
-                                    },
-                                    select: {
-                                        imageResource: true
-                                    },
-                                    take: 1
-                                },
-                                warrantySpecs: true
-                            }
-                        }
-                    }
-                }
+                customer: true
             }
         });
+        console.log(completedOrders.length)
 
-        for (const order of orders) {
-            const currentDate = new Date();
-            const completedDate = new Date(order.completedAt);
+        completedOrders.forEach((order) => {
+            const customer = order.customer;
+            const motorbikes = order.orderItems.map((item) => item.motorbike);
 
-            const daysSinceCompletion = Math.floor(
-                (currentDate.getTime() - completedDate.getTime()) /
-                    (1000 * 60 * 60 * 24)
-            );
-
-            if (daysSinceCompletion > 0 && daysSinceCompletion % 30 === 0) {
-                await this.mailerService.sendMail(
-                    order.customerEmail,
-                    'Reminder for motorbike service',
-                    'service_reminder',
-                    {
-                        order
-                    }
+            motorbikes.forEach(async (motorbike) => {
+                const monthsSinceSold = Math.ceil(
+                    (new Date().getTime() - motorbike.soldAt.getTime()) /
+                        (1000 * 60 * 60 * 24 * 30)
                 );
-            }
-        }
+                const serviceToken = await this.prisma.serviceToken.findFirst({
+                    where: {
+                        motorbikeId: motorbike.id,
+                        maxOdometer: {
+                            lte: motorbike.odometer
+                        },
+                        minMonth: {
+                            lte: monthsSinceSold
+                        },
+                        usedAt: {
+                            equals: null
+                        }
+                    }
+                });
+                if (serviceToken) {
+                    await this.mailerService.sendMail(
+                        customer.email,
+                        'Hãy đến bảo dưỡng xe của bạn tại Yamaha',
+                        'service_reminder',
+                        {
+                            motorbike,
+                            customer,
+                            serviceToken
+                        }
+                    );
+                }
+            });
+        });
     }
 }

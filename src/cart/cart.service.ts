@@ -1,12 +1,17 @@
 import { PrismaService } from "@/shared/PrismaClient";
 import { Injectable } from "@nestjs/common";
 import { CartDetailDto } from "./dto/get_cart_detail.dto";
+import CouponsService from "@/coupons/coupons.service";
+import { CouponType } from "@prisma/client";
 
 @Injectable()
 export class CartService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly couponsService: CouponsService
+    ) {}
 
-    async getCartDetail(cartDetailDto: CartDetailDto[]) {
+    async getCartDetail(cartDetailDto: CartDetailDto[], couponCode: string) {
         const maxQuantity: Record<number, number> = {}
         const errors: Record<number, string> = {}
         const result = await Promise.all(
@@ -63,6 +68,17 @@ export class CartService {
         // calculate total price
         const totalPrice = result.reduce((acc, curr) => acc + curr.item.price * curr.quantity, 0);
 
-        return { cart: result, metadata: { totalPrice, maxQuantity, errors } };
+        let couponDiscount = 0;
+        let coupon = null;
+        if (couponCode) {
+            coupon = await this.couponsService.getCoupon(couponCode);
+            if (coupon && coupon.discount && coupon.type === CouponType.PERCENTAGE) {
+                couponDiscount = (totalPrice * coupon.discount) / 100;
+            } else if (coupon && coupon.discount && coupon.type === CouponType.FIXED) {
+                   couponDiscount = coupon.discount;
+            }
+        }
+
+        return { cart: result, metadata: { totalPrice: totalPrice - couponDiscount, maxQuantity, errors, coupon } };
     }
 }

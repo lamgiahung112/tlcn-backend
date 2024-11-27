@@ -28,6 +28,7 @@ export class OrdersController {
     async createOrder(@Body() data: CreateOrderDto, @Req() request: Request) {
         const token = request.cookies?.['user_token'];
         const customerId = await this.authService.validateUserSession(token);
+        console.log({ customerId, token });
         if (!customerId) {
             throw new UnauthorizedException();
         }

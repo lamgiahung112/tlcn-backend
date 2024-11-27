@@ -3,6 +3,7 @@ import {
     IsBoolean,
     IsNumber,
     IsObject,
+    IsOptional,
     IsString,
     ValidateNested
 } from 'class-validator';
@@ -37,4 +38,8 @@ export class CreateOrderDto {
 
     @IsString()
     paypalOrderId: string;
+
+    @IsString()
+    @IsOptional()
+    couponCode: string;
 }

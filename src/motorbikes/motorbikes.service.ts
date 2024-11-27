@@ -1,35 +1,38 @@
-import { PrismaService } from "@/shared/PrismaClient";
-import { Injectable, BadRequestException } from "@nestjs/common";
-import { OrderStatus } from "@prisma/client";
+import { PrismaService } from '@/shared/PrismaClient';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { OrderStatus } from '@prisma/client';
 import * as csv from 'csv-parse';
 import { Readable } from 'stream';
 
 @Injectable()
 export class MotorbikeService {
-    constructor(
-        private readonly prisma: PrismaService
-    ) {}
+    constructor(private readonly prisma: PrismaService) {}
 
-    async importMotorbikesFromCsv(genericMotorbikeId: number, file: Express.Multer.File) {
+    async importMotorbikesFromCsv(
+        genericMotorbikeId: number,
+        file: Express.Multer.File
+    ) {
         const genericMotorbike = await this.prisma.genericMotorbike.findUnique({
             where: { id: genericMotorbikeId }
         });
 
         if (!genericMotorbike) {
-            throw new BadRequestException(`Generic motorbike with ID ${genericMotorbikeId} not found`);
+            throw new BadRequestException(
+                `Generic motorbike with ID ${genericMotorbikeId} not found`
+            );
         }
 
         const results = await this.parseCsvFile(file.buffer);
 
         const createdMotorbikes = await this.prisma.motorbike.createMany({
-            data: results.map(row => {
+            data: results.map((row) => {
                 return {
                     genericMotorbikeId,
                     price: Number(row.price),
                     chassisCode: row.chassisCode,
                     engineCode: row.engineCode,
-                    arrivedToInventoryAt: new Date(row.arrivedToInventoryAt),
-                }
+                    arrivedToInventoryAt: new Date(row.arrivedToInventoryAt)
+                };
             })
         });
 
@@ -47,7 +50,7 @@ export class MotorbikeService {
             data: {
                 isSold: true
             }
-        })
+        });
     }
 
     private parseCsvFile(fileBuffer: Buffer): Promise<any[]> {
@@ -56,10 +59,12 @@ export class MotorbikeService {
             const stream = Readable.from(fileBuffer.toString());
 
             stream
-                .pipe(csv.parse({
-                    columns: true,
-                    skip_empty_lines: true
-                }))
+                .pipe(
+                    csv.parse({
+                        columns: true,
+                        skip_empty_lines: true
+                    })
+                )
                 .on('data', (data) => results.push(data))
                 .on('end', () => resolve(results))
                 .on('error', (error) => reject(error));
@@ -85,7 +90,7 @@ export class MotorbikeService {
                                                 }
                                             },
                                             where: {
-                                                isGallery: false,
+                                                isGallery: false
                                             },
                                             take: 1
                                         }
@@ -98,12 +103,12 @@ export class MotorbikeService {
             }
         });
 
-        const motorbikes = []
-        orders.forEach(order => {
-            order.orderItems.forEach(item => {
-                motorbikes.push(item.motorbike)
-            })
-        })
+        const motorbikes = [];
+        orders.forEach((order) => {
+            order.orderItems.forEach((item) => {
+                motorbikes.push(item.motorbike);
+            });
+        });
         return motorbikes;
     }
 
@@ -115,20 +120,16 @@ export class MotorbikeService {
                     include: {
                         images: {
                             select: {
-                                imageResource: {
-                                    select: {
-                                        s3Key: true
-                                    }
-                                }
+                                imageResource: true
                             },
                             where: {
-                                isGallery: false,
-                            },
-                            take: 1
+                                isGallery: false
+                            }
                         }
                     }
-                }
+                },
+                serviceTokens: true
             }
-        })
+        });
     }
 }

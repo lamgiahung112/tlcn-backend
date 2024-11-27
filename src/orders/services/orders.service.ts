@@ -6,10 +6,11 @@ import {
 } from '@nestjs/common';
 import { CreateOrderDto } from '../dto';
 import { randomUUID } from 'crypto';
-import { OrderStatus, Prisma } from '@prisma/client';
+import { CouponType, OrderStatus, Prisma } from '@prisma/client';
 import { PaymentService } from '@/payment/payment.service';
 import { FilterOrderDto } from '../dto/FilterOrderDto';
 import { MailerService } from '@/notifications/mailer.service';
+import CouponsService from '@/coupons/coupons.service';
 
 const serviceTokenRanges = [
     // 10,000 km ranges
@@ -17,13 +18,13 @@ const serviceTokenRanges = [
     { maxOdo: 10000, minMonth: 5, maxMonth: 8 },
     { maxOdo: 10000, minMonth: 9, maxMonth: 12 },
     // 20,000 km ranges
-    { maxOdo: 20000, minMonth: 1, maxMonth: 4 },
-    { maxOdo: 20000, minMonth: 5, maxMonth: 8 },
-    { maxOdo: 20000, minMonth: 9, maxMonth: 12 },
+    { maxOdo: 20000, minMonth: 13, maxMonth: 16 },
+    { maxOdo: 20000, minMonth: 17, maxMonth: 20 },
+    { maxOdo: 20000, minMonth: 21, maxMonth: 24 },
     // 30,000 km ranges
-    { maxOdo: 30000, minMonth: 1, maxMonth: 4 },
-    { maxOdo: 30000, minMonth: 5, maxMonth: 8 },
-    { maxOdo: 30000, minMonth: 9, maxMonth: 12 }
+    { maxOdo: 30000, minMonth: 25, maxMonth: 28 },
+    { maxOdo: 30000, minMonth: 29, maxMonth: 32 },
+    { maxOdo: 30000, minMonth: 33, maxMonth: 36 }
 ];
 
 @Injectable()
@@ -31,7 +32,8 @@ export class OrdersService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly paymentService: PaymentService,
-        private readonly mailerService: MailerService
+        private readonly mailerService: MailerService,
+        private readonly couponsService: CouponsService
     ) {}
 
     async createOrder(customerId: number, data: CreateOrderDto) {
@@ -61,20 +63,17 @@ export class OrdersService {
             0
         );
 
-        flatMotorbikes.forEach(async (motorbike) => {
-            await Promise.all(
-                serviceTokenRanges.map((range) =>
-                    this.prisma.serviceToken.create({
-                        data: {
-                            motorbikeId: motorbike.id,
-                            minMonth: range.minMonth,
-                            maxMonth: range.maxMonth,
-                            maxOdometer: range.maxOdo
-                        }
-                    })
-                )
-            );
-        });
+        let couponDiscount = 0;
+        let couponId = null;
+        if (data.couponCode) {
+            const coupon = await this.couponsService.getCoupon(data.couponCode);
+            if (coupon.discount && coupon.type === CouponType.PERCENTAGE) {
+                couponDiscount = (total * coupon.discount) / 100;
+            } else if (coupon.discount && coupon.type === CouponType.FIXED) {
+                couponDiscount = coupon.discount;
+            }
+            couponId = coupon.id;
+        }
 
         const order = await this.prisma.order.create({
             data: {
@@ -85,7 +84,8 @@ export class OrdersService {
                 customerPhone: data.customer.customerPhone,
                 publicOrderId: randomUUID().replaceAll('-', '').substring(0, 7),
                 createdAt: new Date(),
-                total,
+                total: total - couponDiscount,
+                couponId,
                 orderItems: {
                     createMany: {
                         data: flatMotorbikes.map((motorbike) => {
@@ -197,6 +197,11 @@ export class OrdersService {
                             }
                         }
                     }
+                },
+                coupon: {
+                    include: {
+                        itemImageResource: true
+                    }
                 }
             }
         });
@@ -241,6 +246,11 @@ export class OrdersService {
                                 category: true
                             }
                         }
+                    }
+                },
+                coupon: {
+                    include: {
+                        itemImageResource: true
                     }
                 }
             }
@@ -331,9 +341,37 @@ export class OrdersService {
                 data: {
                     status: OrderStatus.COMPLETED,
                     completedAt: new Date()
+                },
+                include: {
+                    coupon: {
+                        include: {
+                            itemImageResource: true
+                        }
+                    },
+                    orderItems: {
+                        include: {
+                            motorbike: true
+                        }
+                    }
                 }
             })
             .then(async (order) => {
+                order.orderItems
+                    .map((item) => item.motorbike)
+                    .map((motorbike) => {
+                        return Promise.all(
+                            serviceTokenRanges.map((range) =>
+                                this.prisma.serviceToken.create({
+                                    data: {
+                                        motorbikeId: motorbike.id,
+                                        minMonth: range.minMonth,
+                                        maxMonth: range.maxMonth,
+                                        maxOdometer: range.maxOdo
+                                    }
+                                })
+                            )
+                        );
+                    });
                 const mailOrder = await this.getAdminOrder(order.publicOrderId);
                 this.mailerService.sendMail(
                     order.customerEmail,
@@ -432,6 +470,11 @@ export class OrdersService {
                                 category: true
                             }
                         }
+                    }
+                },
+                coupon: {
+                    include: {
+                        itemImageResource: true
                     }
                 }
             }

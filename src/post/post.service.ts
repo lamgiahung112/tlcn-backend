@@ -1,11 +1,15 @@
 import { PrismaService } from '@/shared/PrismaClient';
-import { Prisma } from '@prisma/client';
+import { OrderStatus, Prisma } from '@prisma/client';
 import { PostRequestDto } from './dto/PostRequestDto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { MailerService } from '@/notifications/mailer.service';
 
 @Injectable()
 export class PostService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly mailerService: MailerService
+    ) {}
 
     async paginate(page: number, perPage: number, name?: string) {
         const where: Prisma.PostWhereInput = {
@@ -112,6 +116,35 @@ export class PostService {
     }
 
     async publishPost(id: number) {
+        const post = await this.prisma.post.findUnique({
+            where: { id }
+        });
+
+        if (!post) {
+            throw new NotFoundException('Post not found');
+        }
+
+        const users = await this.prisma.user.findMany({
+            where: {
+                orders: {
+                    some: {
+                        status: OrderStatus.COMPLETED
+                    }
+                }
+            }
+        });
+
+        Promise.allSettled(
+            users.map((user) =>
+                this.mailerService.sendMail(
+                    user.email,
+                    `Khuyến Mãi Yamaha: ${post.title}`,
+                    'new_promotion',
+                    post
+                )
+            )
+        );
+
         return this.prisma.post.update({
             where: { id },
             data: { isPublished: true }

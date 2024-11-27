@@ -98,6 +98,12 @@
                             <td style="font-size: 1.125rem; font-weight: 700; padding: 8px 0;">Paypal Order ID</td>
                             <td style="font-size: 1.125rem; text-align: right; padding: 8px 0;"><%= order.paypalOrderId %></td>
                         </tr>
+                        <% if (order.coupon) { %>
+                            <tr>
+                                <td style="font-size: 1.125rem; font-weight: 700; padding: 8px 0;">Applied Coupon</td>
+                                <td style="font-size: 1.125rem; text-align: right; padding: 8px 0;"><%= order.coupon.code %></td>
+                            </tr>
+                        <% } %>
                     </table>
                 </div>
             </div>
