@@ -28,10 +28,11 @@ export class MotorbikeService {
             data: results.map((row) => {
                 return {
                     genericMotorbikeId,
-                    price: Number(row.price),
+                    price: genericMotorbike.recommendedPrice,
                     chassisCode: row.chassisCode,
                     engineCode: row.engineCode,
-                    arrivedToInventoryAt: new Date(row.arrivedToInventoryAt)
+                    arrivedToInventoryAt: new Date(row.arrivedToInventoryAt),
+                    plateNumber: row.plateNumber,
                 };
             })
         });

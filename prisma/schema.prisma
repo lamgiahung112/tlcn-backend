@@ -95,7 +95,6 @@ model ServiceToken {
   usedAt                DateTime?
   createdAt             DateTime          @default(now())
   motorbike             Motorbike         @relation(fields: [motorbikeId], references: [id])
-  serviceAppointments   ServiceAppointment[]
 }
 
 model Order {
@@ -174,15 +173,5 @@ model Coupon {
   isPublished           Boolean         @default(false)
   itemImageResource     ImageResource?  @relation(fields: [itemImageResourceId], references: [id])
   orders                Order[]
-}
-
-model ServiceAppointment {
-  id                Int           @id @default(autoincrement())
-  serviceTokenId    Int
-  date              DateTime
-  cancelledAt       DateTime?
-  completedAt       DateTime?
-  createdAt         DateTime      @default(now())
-  serviceToken      ServiceToken? @relation(fields: [serviceTokenId], references: [id])
 }
 

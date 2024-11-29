@@ -20,13 +20,16 @@ export class SchedulerService {
             include: {
                 orderItems: {
                     include: {
-                        motorbike: true
+                        motorbike: {
+                            include: {
+                                genericMotorbike: true
+                            }
+                        }
                     }
                 },
                 customer: true
             }
         });
-        console.log(completedOrders.length)
 
         completedOrders.forEach((order) => {
             const customer = order.customer;
